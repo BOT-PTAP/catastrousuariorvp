@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CATASTRO DE USUARIOS - RED VITAL PAIPA S.A. E.S.P.</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e8f0fe 0%, #d4e4f7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+            padding: 30px 25px;
+            max-width: 700px;
+            width: 100%;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #f0f4f8;
+            padding-bottom: 20px;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .logo {
+            max-width: 180px;
+            height: auto;
+            border-radius: 12px;
+            padding: 5px;
+            background: #f8fafc;
+        }
+
+        header h1 {
+            color: #1a3a5c;
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        header .subtitle {
+            color: #5a7a9c;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #1a3a5c;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        label .required {
+            color: #e74c3c;
+            margin-left: 2px;
+        }
+
+        label .optional {
+            color: #95a5a6;
+            font-weight: 400;
+            font-size: 12px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background: #fafcfe;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2a7a9c;
+            box-shadow: 0 0 0 3px rgba(42, 122, 156, 0.15);
+            background: white;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1a3a5c, #2a5a7c);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 58, 92, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #95a5a6;
+            font-size: 12px;
+            border-top: 1px solid #f0f4f8;
+            padding-top: 15px;
+        }
+
+        footer .footer-brand {
+            color: #2a5a7c;
+            font-weight: 600;
+        }
+
+        .section-spacing {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #1a3a5c;
+            font-size: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #2a7a9c;
+            padding-left: 10px;
+        }
+
+        .terms-container {
+            margin-bottom: 14px;
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .terms-container:hover {
+            background: #f0f5fa;
+        }
+
+        .terms-label {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            cursor: pointer;
+            font-weight: 400 !important;
+            margin-bottom: 0;
+        }
+
+        .terms-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            accent-color: #2a5a7c;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .terms-text {
+            font-weight: 400;
+            font-size: 12px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+
+        .terms-link {
+            color: #2a5a7c;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        .terms-link:hover {
+            color: #1a3a5c;
+            text-decoration: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s ease-in-out infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 20px 15px; }
+            header h1 { font-size: 18px; }
+            .logo { max-width: 130px; }
+            input, select, textarea { font-size: 14px; padding: 10px 12px; }
+        }
+
+        .hidden { display: none !important; }
+
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .radio-group label {
+            font-weight: 400;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #2c3e50;
+        }
+
+        .radio-group input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2a5a7c;
+            cursor: pointer;
+        }
+
+        .footer-text { font-size: 11px; margin-top: 4px; }
+        .footer-text-spacing { font-size: 11px; margin-top: 5px; }
+
+        .geo-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .geo-badge.pending { background: #fff3e0; color: #ef6c00; }
+        .geo-badge.error { background: #ffebee; color: #c62828; }
+
+        .geo-info-box {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #475569;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .geo-info-box strong { color: #1a3a5c; }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 520px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo-container">
+            <img src="https://res.cloudinary.com/ddr2mfii6/image/upload/v1776795062/Logo_Red_Vital_Paipa_2024_Original_g66es5.png" alt="Red Vital Paipa" class="logo">
+        </div>
+        <h1>🏘️ CATASTRO DE USUARIOS</h1>
+        <p class="subtitle">Registro de suscriptores y georreferenciación de predios</p>
+    </header>
+
+    <div id="geoStatus" class="geo-badge pending">📍 Obteniendo ubicación...</div>
+
+    <form id="catastroForm" novalidate>
+
+        <!-- SECCIÓN 1: DATOS DEL SUSCRIPTOR -->
+        <div class="section-spacing">
+            <h3 class="section-title">👤 DATOS DEL SUSCRIPTOR</h3>
+
+            <div class="form-group">
+                <label for="fullName">Nombre completo <span class="required">*</span></label>
+                <input type="text" id="fullName" placeholder="Ej: Juan Carlos Ramírez López" required>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="documentType">Tipo de documento <span class="required">*</span></label>
+                    <select id="documentType" required>
+                        <option value="">Selecciona</option>
+                        <option value="CC">Cédula de ciudadanía</option>
+                        <option value="CE">Cédula de extranjería</option>
+                        <option value="NIT">NIT</option>
+                        <option value="PAS">Pasaporte</option>
+                        <option value="TI">Tarjeta de identidad</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="documentNumber">Número de documento <span class="required">*</span></label>
+                    <input type="text" id="documentNumber" placeholder="Ej: 72345678" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="phone">Teléfono móvil <span class="required">*</span></label>
+                    <input type="tel" id="phone" placeholder="3001234567" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Correo electrónico <span class="optional">(opcional)</span></label>
+                    <input type="email" id="email" placeholder="usuario@ejemplo.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="estrato">Estrato socioeconómico <span class="required">*</span></label>
+                <select id="estrato" required>
+                    <option value="">Selecciona</option>
+                    <option value="1">Estrato 1 - Bajo-bajo</option>
+                    <option value="2">Estrato 2 - Bajo</option>
+                    <option value="3">Estrato 3 - Medio-bajo</option>
+                    <option value="4">Estrato 4 - Medio</option>
+                    <option value="5">Estrato 5 - Medio-alto</option>
+                    <option value="6">Estrato 6 - Alto</option>
+                    <option value="Comercial">Comercial</option>
+                    <option value="Industrial">Industrial</option>
+                    <option value="Oficial">Oficial</option>
+                    <option value="Especial">Especial</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: DATOS DEL PREDIO -->
+        <div class="section-spacing">
+            <h3 class="section-title">🏠 DATOS DEL PREDIO / DIRECCIÓN</h3>
+
+            <div class="form-group">
+                <label for="address">Dirección del predio <span class="required">*</span></label>
+                <input type="text" id="address" placeholder="Ej: Carrera 5 # 12-34, Barrio El Centro" required>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="barrio">Barrio / Vereda <span class="required">*</span></label>
+                    <input type="text" id="barrio" placeholder="Ej: El Centro" required>
+                </div>
+                <div class="form-group">
+                    <label for="municipio">Municipio <span class="required">*</span></label>
+                    <input type="text" id="municipio" value="Paipa" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="matricula">N° de matrícula / Cuenta <span class="required">*</span></label>
+                    <input type="text" id="matricula" placeholder="Ej: 0012345" required>
+                </div>
+                <div class="form-group">
+                    <label for="ciclo">Ciclo de facturación <span class="optional">(opcional)</span></label>
+                    <select id="ciclo">
+                        <option value="">Selecciona</option>
+                        <option value="1">Ciclo 1</option>
+                        <option value="2">Ciclo 2</option>
+                        <option value="3">Ciclo 3</option>
+                        <option value="4">Ciclo 4</option>
+                        <option value="5">Ciclo 5</option>
+                        <option value="6">Ciclo 6</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: SERVICIOS -->
+        <div class="section-spacing">
+            <h3 class="section-title">💧 SERVICIOS PRESTADOS</h3>
+
+            <div class="form-group">
+                <label>Tipo de servicio <span class="required">*</span></label>
+                <div class="radio-group">
+                    <label><input type="radio" name="servicio" value="Acueducto" required> Acueducto</label>
+                    <label><input type="radio" name="servicio" value="Alcantarillado"> Alcantarillado</label>
+                    <label><input type="radio" name="servicio" value="Acueducto y Alcantarillado"> Acueducto y Alcantarillado</label>
+                    <label><input type="radio" name="servicio" value="Aseo"> Aseo</label>
+                    <label><input type="radio" name="servicio" value="Todos los servicios"> Todos los servicios</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de uso del predio <span class="required">*</span></label>
+                <div class="radio-group">
+                    <label><input type="radio" name="tipoUso" value="Residencial" required> Residencial</label>
+                    <label><input type="radio" name="tipoUso" value="Comercial"> Comercial</label>
+                    <label><input type="radio" name="tipoUso" value="Industrial"> Industrial</label>
+                    <label><input type="radio" name="tipoUso" value="Institucional"> Institucional</label>
+                    <label><input type="radio" name="tipoUso" value="Mixto"> Mixto</label>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="numPersonas">N° de personas en el predio <span class="required">*</span></label>
+                    <input type="number" id="numPersonas" min="1" max="50" placeholder="Ej: 4" required>
+                </div>
+                <div class="form-group">
+                    <label for="medidor">¿Tiene medidor? <span class="required">*</span></label>
+                    <select id="medidor" required>
+                        <option value="">Selecciona</option>
+                        <option value="Sí">Sí</option>
+                        <option value="No">No</option>
+                        <option value="Compartido">Compartido</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="observaciones">Observaciones <span class="optional">(opcional)</span></label>
+                <textarea id="observaciones" rows="3" placeholder="Información adicional relevante del predio o del suscriptor"></textarea>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: GEORREFERENCIACIÓN -->
+        <div class="section-spacing">
+            <h3 class="section-title">📍 GEORREFERENCIACIÓN DEL PREDIO</h3>
+
+            <div class="geo-info-box" id="geoInfoBox">
+                <strong>Coordenadas capturadas automáticamente:</strong><br>
+                <span id="geoDetail">Esperando señal GPS...</span>
+            </div>
+
+            <div class="form-group">
+                <label for="referencia">Punto de referencia <span class="optional">(opcional)</span></label>
+                <input type="text" id="referencia" placeholder="Ej: Frente a la panadería La Espiga">
+            </div>
+
+            <button type="button" class="btn-primary" id="btnRecapturar" style="background: linear-gradient(135deg, #2a7a9c, #3a9abd); font-size: 14px; padding: 10px;">
+                🔄 RECAPTURAR COORDENADAS
+            </button>
+        </div>
+
+        <!-- TÉRMINOS -->
+        <div class="terms-container">
+            <label class="terms-label">
+                <input type="checkbox" id="termsCheck" required>
+                <span class="terms-text">
+                    Autorizo el tratamiento de mis datos personales conforme a la
+                    <a href="#" target="_blank" class="terms-link">Política de Tratamiento de Datos Personales</a>
+                    <span class="required">*</span>
+                </span>
+            </label>
+        </div>
+
+        <!-- CAMPOS OCULTOS -->
+        <input type="hidden" id="entryTime">
+        <input type="hidden" id="entryDate">
+        <input type="hidden" id="coordX">
+        <input type="hidden" id="coordY">
+        <input type="hidden" id="coordZ">
+        <input type="hidden" id="coordPrecision">
+        <input type="hidden" id="coordFuente">
+        <input type="hidden" id="coordLatDMS">
+        <input type="hidden" id="coordLonDMS">
+
+        <button type="submit" class="btn-primary" id="submitBtn">
+            📥 REGISTRAR CATASTRO
+        </button>
+        <div id="message" class="message"></div>
+    </form>
+
+    <footer>
+        <p class="footer-text">© 2026 <span class="footer-brand">Todos los derechos reservados.</span></p>
+        <p class="footer-text-spacing">RED VITAL PAIPA S.A. E.S.P. - NIT 900259348</p>
+    </footer>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ============================================================
+    // REFERENCIAS AL DOM
+    // ============================================================
+    const form = document.getElementById('catastroForm');
+    const messageDiv = document.getElementById('message');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnRecapturar = document.getElementById('btnRecapturar');
+    const termsCheck = document.getElementById('termsCheck');
+
+    const entryTimeInput = document.getElementById('entryTime');
+    const entryDateInput = document.getElementById('entryDate');
+
+    const coordXInput = document.getElementById('coordX');
+    const coordYInput = document.getElementById('coordY');
+    const coordZInput = document.getElementById('coordZ');
+    const coordPrecisionInput = document.getElementById('coordPrecision');
+    const coordFuenteInput = document.getElementById('coordFuente');
+    const coordLatDMSInput = document.getElementById('coordLatDMS');
+    const coordLonDMSInput = document.getElementById('coordLonDMS');
+
+    const geoStatus = document.getElementById('geoStatus');
+    const geoDetail = document.getElementById('geoDetail');
+
+    // ============================================================
+    // FECHA Y HORA
+    // ============================================================
+    function updateDateTime() {
+        const now = new Date();
+        entryTimeInput.value = now.toLocaleTimeString('es-CO', {
+            timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit'
+        });
+        entryDateInput.value = now.toLocaleDateString('es-CO', {
+            timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+    }
+    updateDateTime();
+
+    // ============================================================
+    // GEOLOCALIZACIÓN - X (Longitud), Y (Latitud), Z (Altitud)
+    // ============================================================
+    let geoData = { x: '', y: '', z: '', precision: '', fuente: '' };
+    let geoReady = false;
+
+    function actualizarUIEstado(tipo, mensaje) {
+        // tipo: 'ok' | 'pending' | 'error'
+        geoStatus.className = 'geo-badge ' + (tipo === 'ok' ? '' : tipo);
+        geoStatus.textContent = mensaje;
+    }
+
+    function pintarDetalle() {
+        if (geoReady) {
+            const longitud = Number(geoData.x);
+            const latitud = Number(geoData.y);
+            const longitudDMS = convertirDMS(longitud, 'lon');
+            const latitudDMS = convertirDMS(latitud, 'lat');
+
+            geoDetail.innerHTML =
+                '<strong>X (Longitud):</strong> ' + geoData.x + ' | ' +
+                '<strong>Y (Latitud):</strong> ' + geoData.y + ' | ' +
+                '<strong>Z (Altitud):</strong> ' + (geoData.z || 'N/D') + '<br>' +
+                '<strong>GMS:</strong> ' + latitudDMS + ', ' + longitudDMS + '<br>' +
+                '<strong>Precisión GPS:</strong> ' + (geoData.precision || 'N/D') +
+                ' &nbsp;|&nbsp; <strong>Fuente:</strong> ' + geoData.fuente;
+        } else {
+            geoDetail.textContent = 'Sin coordenadas disponibles. Puedes registrar sin GPS o pulsar "Recapturar".';
+        }
+    }
+
+// ============================================================
+// GEOLOCALIZACIÓN MEJORADA - Con diagnóstico de errores
+// ============================================================
+const coordXInput = document.getElementById('coordX');
+const coordYInput = document.getElementById('coordY');
+const coordZInput = document.getElementById('coordZ');
+const coordPrecisionInput = document.getElementById('coordPrecision');
+const coordFuenteInput = document.getElementById('coordFuente');
+const geoStatus = document.getElementById('geoStatus');
+const geoDetail = document.getElementById('geoDetail');
+
+let geoData = { x: '', y: '', z: '', precision: '', fuente: '' };
+let geoReady = false;
+
+// Fallback calibrado para Paipa
+const PAIPA_FALLBACK = {
+    lng: -73.117482,
+    lat: 5.781178,
+    alt: 2500.00,
+    precision: 'Calibración Paipa',
+    fuente: 'FALLBACK-PAIPA'
+};
+
+function actualizarUIEstado(tipo, mensaje) {
+    geoStatus.className = 'geo-badge ' + (tipo === 'ok' ? '' : tipo);
+    geoStatus.textContent = mensaje;
+}
+
+function pintarDetalle() {
+    if (geoReady) {
+        geoDetail.innerHTML =
+            '<strong>X (Longitud):</strong> ' + geoData.x + ' | ' +
+            '<strong>Y (Latitud):</strong> ' + geoData.y + ' | ' +
+            '<strong>Z (Altitud):</strong> ' + (geoData.z || 'N/D') + '<br>' +
+            '<strong>Precisión:</strong> ' + (geoData.precision || 'N/D') +
+            ' &nbsp;|&nbsp; <strong>Fuente:</strong> ' + geoData.fuente;
+    } else {
+        geoDetail.innerHTML = '<span style="color:#c62828;">⚠️ Sin coordenadas GPS. Puedes usar la calibración de Paipa o reintentar.</span>';
+    }
+}
+
+/**
+ * Verifica si el contexto es seguro (HTTPS o localhost).
+ * La Geolocation API NO funciona en file:// ni en http:// (excepto localhost).
+ */
+function contextoEsSeguro() {
+    return window.isSecureContext === true ||
+           location.protocol === 'https:' ||
+           location.hostname === 'localhost' ||
+           location.hostname === '127.0.0.1';
+}
+
+/**
+ * Traduce los códigos de error de la Geolocation API a mensajes útiles.
+ */
+function interpretarErrorGeo(error) {
+    switch (error.code) {
+        case 1: // PERMISSION_DENIED
+            return {
+                codigo: 'PERMISSION_DENIED',
+                mensaje: 'Permiso de ubicación denegado. Ve a Ajustes del navegador → Permisos → Ubicación → Permitir para este sitio.',
+                accion: 'permiso'
+            };
+        case 2: // POSITION_UNAVAILABLE
+            return {
+                codigo: 'POSITION_UNAVAILABLE',
+                mensaje: 'Señal GPS no disponible. Activa la ubicación del celular y sal a un lugar abierto.',
+                accion: 'senal'
+            };
+        case 3: // TIMEOUT
+            return {
+                codigo: 'TIMEOUT',
+                mensaje: 'Tiempo de espera agotado. Verifica que la ubicación del celular esté activada.',
+                accion: 'timeout'
+            };
+        default:
+            return {
+                codigo: 'UNKNOWN',
+                mensaje: 'Error desconocido: ' + (error.message || 'sin detalles'),
+                accion: 'desconocido'
+            };
+    }
+}
+
+/**
+ * Consulta el estado del permiso de geolocalización (si el navegador lo soporta).
+ */
+async function consultarPermisoGeo() {
+    if (!navigator.permissions || !navigator.permissions.query) {
+        return 'no-soportado';
+    }
+    try {
+        const status = await navigator.permissions.query({ name: 'geolocation' });
+        return status.state; // 'granted' | 'prompt' | 'denied'
+    } catch (e) {
+        return 'no-soportado';
+    }
+}
+
+/**
+ * Obtiene coordenadas GPS con timeout extendido y opciones óptimas para móvil.
+ */
+function obtenerCoordenadasGPS() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            return reject({ code: 0, message: 'Geolocalización no soportada por este navegador' });
+        }
+
+        // Contexto NO seguro → error controlado (evita el mensaje genérico del navegador)
+        if (!contextoEsSeguro()) {
+            return reject({
+                code: 1,
+                message: 'La página debe abrirse en HTTPS para usar el GPS. Actualmente: ' + location.protocol
+            });
+        }
+
+        const opciones = {
+            enableHighAccuracy: true,   // Forzar GPS de alta precisión
+            timeout: 30000,             // 30 segundos (móviles lentos)
+            maximumAge: 60000           // Aceptar posición de hasta 1 min
+        };
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => resolve(position.coords),
+            (error) => reject(error),
+            opciones
+        );
+    });
+}
+
+/**
+ * Fallback por IP.
+ */
+async function obtenerCoordenadasPorIP() {
+    try {
+        const resp = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+        const data = await resp.json();
+        if (data && data.latitude && data.longitude) {
+            return {
+                lat: data.latitude,
+                lng: data.longitude,
+                alt: null,
+                accuracy: null,
+                fuente: 'IP'
+            };
+        }
+    } catch (_) {}
+    try {
+        const resp2 = await fetch('https://ipwho.is/', { cache: 'no-store' });
+        const data2 = await resp2.json();
+        if (data2 && data2.success && data2.latitude) {
+            return {
+                lat: data2.latitude,
+                lng: data2.longitude,
+                alt: null,
+                accuracy: null,
+                fuente: 'IP'
+            };
+        }
+    } catch (_) {}
+    throw new Error('Sin ubicación por IP');
+}
+
+/**
+ * Aplica el fallback calibrado de Paipa cuando no hay GPS ni IP.
+ */
+function aplicarFallbackPaipa(motivo) {
+    geoData = {
+        x: PAIPA_FALLBACK.lng.toFixed(6),
+        y: PAIPA_FALLBACK.lat.toFixed(6),
+        z: PAIPA_FALLBACK.alt.toFixed(2),
+        precision: PAIPA_FALLBACK.precision,
+        fuente: PAIPA_FALLBACK.fuente
+    };
+    geoReady = true;
+    actualizarCamposGeo();
+    actualizarUIEstado('pending', '📌 Coordenadas calibradas (Paipa) — ' + (motivo || 'GPS no disponible'));
+    pintarDetalle();
+}
+
+function actualizarCamposGeo() {
+    coordXInput.value = geoData.x;
+    coordYInput.value = geoData.y;
+    coordZInput.value = geoData.z;
+    coordPrecisionInput.value = geoData.precision;
+    coordFuenteInput.value = geoData.fuente;
+}
+
+/**
+ * Orquestador principal con diagnóstico paso a paso.
+ */
+async function inicializarGeolocalizacion(forzarReintento) {
+    actualizarUIEstado('pending', '📍 Obteniendo ubicación...');
+    geoReady = false;
+
+    // 0) Diagnóstico inicial
+    console.log('🔎 Diagnóstico GPS:');
+    console.log('  - isSecureContext:', window.isSecureContext);
+    console.log('  - protocol:', location.protocol);
+    console.log('  - hostname:', location.hostname);
+    console.log('  - geolocation:', !!navigator.geolocation);
+
+    // Si es reintento, limpiamos permiso previo (no se puede resetear por JS, pero avisamos)
+    if (forzarReintento) {
+        const permiso = await consultarPermisoGeo();
+        console.log('  - Estado permiso:', permiso);
+        if (permiso === 'denied') {
+            actualizarUIEstado('error',
+                '❌ Permiso DENEGADO. Ve a Ajustes del navegador → Permisos → Ubicación → Permitir para este sitio y recarga la página.');
+            geoDetail.innerHTML =
+                '<strong style="color:#c62828;">Cómo activar el permiso:</strong><br>' +
+                '1. Toca el candado 🔒 (o el ícono ⓘ) junto a la barra de direcciones.<br>' +
+                '2. Entra a <em>Permisos</em> → <em>Ubicación</em>.<br>' +
+                '3. Selecciona <strong>Permitir</strong>.<br>' +
+                '4. Recarga la página (F5) y vuelve a intentar.';
+            aplicarFallbackPaipa('Permiso denegado');
+            return;
+        }
+    }
+
+    // 1) Verificar contexto seguro (HTTPS)
+    if (!contextoEsSeguro()) {
+        console.warn('⚠️ Contexto NO seguro. La Geolocation API requiere HTTPS.');
+        actualizarUIEstado('error', '⚠️ Se requiere HTTPS para el GPS.');
+        geoDetail.innerHTML =
+            '<strong style="color:#c62828;">El GPS solo funciona en HTTPS.</strong><br>' +
+            'Estás abriendo el archivo con <code>' + location.protocol + '</code>.<br><br>' +
+            '<strong>Solución:</strong> sube el HTML a uno de estos servicios gratuitos y ábrelo desde el celular:<br>' +
+            '• <a href="https://pages.github.com/" target="_blank">GitHub Pages</a><br>' +
+            '• <a href="https://www.netlify.com/" target="_blank">Netlify Drop</a> (arrastrar y soltar)<br>' +
+            '• <a href="https://vercel.com/" target="_blank">Vercel</a>';
+        aplicarFallbackPaipa('Sin HTTPS');
+        return;
+    }
+
+    // 2) Intentar GPS
+    try {
+        const c = await obtenerCoordenadasGPS();
+        geoData = {
+            x: c.longitude.toFixed(6),
+            y: c.latitude.toFixed(6),
+            z: (c.altitude !== null && c.altitude !== undefined) ? c.altitude.toFixed(2) : '',
+            precision: c.accuracy ? Math.round(c.accuracy) + ' m' : '',
+            fuente: 'GPS'
+        };
+        geoReady = true;
+        actualizarCamposGeo();
+        actualizarUIEstado('ok', '✅ Ubicación capturada por GPS (±' + Math.round(c.accuracy) + ' m)');
+        pintarDetalle();
+        return;
+    } catch (err) {
+        const info = interpretarErrorGeo(err);
+        console.warn('❌ GPS falló:', info.codigo, '-', info.mensaje);
+
+        // Mensajes específicos según el tipo de error
+        if (info.accion === 'permiso') {
+            actualizarUIEstado('error', '❌ Permiso denegado. Actívalo en Ajustes del navegador.');
+            geoDetail.innerHTML =
+                '<strong style="color:#c62828;">Permiso de ubicación denegado.</strong><br>' +
+                '<strong>Cómo activarlo en tu celular:</strong><br>' +
+                '• <strong>Chrome Android:</strong> Toca el candado 🔒 junto a la URL → <em>Permisos</em> → <em>Ubicación</em> → <em>Permitir</em>.<br>' +
+                '• <strong>Safari iOS:</strong> Ajustes → Safari → Ubicación → <em>Preguntar</em> o <em>Permitir</em>.<br>' +
+                '• También verifica que la <strong>ubicación del sistema</strong> esté activada (Ajustes → Ubicación).<br>' +
+                'Luego recarga la página.';
+        } else if (info.accion === 'senal') {
+            actualizarUIEstado('error', '📡 Señal GPS no disponible. Sal a un lugar abierto.');
+            geoDetail.innerHTML =
+                '<strong style="color:#ef6c00;">El celular no logra fijar señal GPS.</strong><br>' +
+                '• Verifica que la <strong>ubicación del sistema</strong> esté ACTIVADA.<br>' +
+                '• Sal a un lugar abierto (sin techo, sin árboles).<br>' +
+                '• Espera 20-30 segundos y presiona "Recapturar".';
+        } else if (info.accion === 'timeout') {
+            actualizarUIEstado('error', '⏱️ Tiempo agotado. Reintenta con "Recapturar".');
+        } else {
+            actualizarUIEstado('error', '❌ ' + info.mensaje);
+        }
+
+        // 3) Intentar fallback por IP
+        try {
+            const c = await obtenerCoordenadasPorIP();
+            geoData = {
+                x: c.lng.toFixed(6),
+                y: c.lat.toFixed(6),
+                z: '',
+                precision: 'Aproximada (IP)',
+                fuente: 'IP'
+            };
+            geoReady = true;
+            actualizarCamposGeo();
+            actualizarUIEstado('pending', '⚠️ Ubicación aproximada por IP');
+            pintarDetalle();
+        } catch (err2) {
+            // 4) Último recurso: calibración Paipa
+            aplicarFallbackPaipa(info.mensaje);
+        }
+    }
+}
+
+// Botón de recapturar
+btnRecapturar.addEventListener('click', async function() {
+    btnRecapturar.disabled = true;
+    btnRecapturar.innerHTML = '<span class="spinner"></span> Capturando...';
+    await inicializarGeolocalizacion(true); // forzarReintento = true
+    btnRecapturar.disabled = false;
+    btnRecapturar.innerHTML = '🔄 RECAPTURAR COORDENADAS';
+});
+
+// Lanzar al cargar
+inicializarGeolocalizacion(false);
+
+    function clasificarPrecision(accuracy) {
+        if (!Number.isFinite(accuracy)) return 'No determinada';
+        if (accuracy <= 5) return 'Alta (≤ 5 m)';
+        if (accuracy <= 15) return 'Aceptable (> 5 a 15 m)';
+        if (accuracy <= 30) return 'Baja (> 15 a 30 m)';
+        return 'No recomendable (> 30 m)';
+    }
+
+    function convertirDMS(decimal, tipo) {
+        if (!Number.isFinite(decimal)) return '';
+
+        const absoluto = Math.abs(decimal);
+        const grados = Math.floor(absoluto);
+        const minutosDec = (absoluto - grados) * 60;
+        const minutos = Math.floor(minutosDec);
+        const segundos = (minutosDec - minutos) * 60;
+
+        const direccion = tipo === 'lat'
+            ? (decimal >= 0 ? 'N' : 'S')
+            : (decimal >= 0 ? 'E' : 'W');
+
+        return `${grados}° ${String(minutos).padStart(2, '0')}′ ${segundos.toFixed(2).padStart(5, '0')}″ ${direccion}`;
+    }
+
+    async function inicializarGeolocalizacion() {
+        actualizarUIEstado('pending', '📍 Obteniendo ubicación GPS de alta precisión...');
+        geoReady = false;
+
+        try {
+            const c = await obtenerCoordenadasGPS();
+
+            const longitud = Number(c.longitude);
+            const latitud = Number(c.latitude);
+            const altitud = Number(c.altitude);
+            const precisionMetros = Number(c.accuracy);
+
+            if (!Number.isFinite(longitud) || !Number.isFinite(latitud)) {
+                throw new Error('El GPS devolvió coordenadas inválidas.');
+            }
+
+            geoData = {
+                x: longitud.toFixed(8),
+                y: latitud.toFixed(8),
+                z: Number.isFinite(altitud) ? altitud.toFixed(2) : '',
+                precision: Number.isFinite(precisionMetros)
+                    ? `${precisionMetros.toFixed(1)} m - ${clasificarPrecision(precisionMetros)}`
+                    : 'No determinada',
+                fuente: 'GPS'
+            };
+
+            geoReady = true;
+            actualizarCamposGeo();
+            actualizarUIEstado('ok', '✅ Ubicación GPS capturada');
+            pintarDetalle();
+
+        } catch (err) {
+            console.warn('GPS no disponible:', err.message);
+
+            geoReady = false;
+            geoData = {
+                x: '',
+                y: '',
+                z: '',
+                precision: '',
+                fuente: ''
+            };
+
+            actualizarCamposGeo();
+            actualizarUIEstado(
+                'error',
+                '❌ GPS no disponible. Active el permiso de ubicación y vuelva a intentar.'
+            );
+            pintarDetalle();
+        }
+    }
+
+    function actualizarCamposGeo() {
+        coordXInput.value = geoData.x;
+        coordYInput.value = geoData.y;
+        coordZInput.value = geoData.z;
+        coordPrecisionInput.value = geoData.precision;
+        coordFuenteInput.value = geoData.fuente;
+        coordLatDMSInput.value = geoReady
+            ? convertirDMS(Number(geoData.y), 'lat')
+            : '';
+        coordLonDMSInput.value = geoReady
+            ? convertirDMS(Number(geoData.x), 'lon')
+            : '';
+    }
+
+    // Lanzar al cargar
+    inicializarGeolocalizacion();
+
+    // Botón de recapturar
+    btnRecapturar.addEventListener('click', async function() {
+        btnRecapturar.disabled = true;
+        btnRecapturar.innerHTML = '<span class="spinner"></span> Capturando...';
+        await inicializarGeolocalizacion();
+        btnRecapturar.disabled = false;
+        btnRecapturar.innerHTML = '🔄 RECAPTURAR COORDENADAS';
+    });
+
+    // ============================================================
+    // VALIDACIONES EN VIVO
+    // ============================================================
+    document.getElementById('phone').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '');
+    });
+    document.getElementById('documentNumber').addEventListener('input', function() {
+        const tipo = document.getElementById('documentType').value;
+        if (tipo === 'CC' || tipo === 'CE' || tipo === 'NIT' || tipo === 'TI') {
+            this.value = this.value.replace(/\D/g, '');
+        }
+    });
+    document.getElementById('matricula').addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9A-Za-z-]/g, '');
+    });
+
+    function showMessage(text, type) {
+        messageDiv.textContent = text;
+        messageDiv.className = 'message ' + type;
+        if (type === 'success') {
+            setTimeout(() => {
+                messageDiv.className = 'message';
+                messageDiv.textContent = '';
+            }, 6000);
+        }
+    }
+
+    function resetExtras() {
+        document.querySelectorAll('textarea').forEach(t => t.value = '');
+        form.reset();
+        // Restaurar valores por defecto
+        document.getElementById('municipio').value = 'Paipa';
+        document.querySelector('input[name="servicio"][value="Acueducto"]').checked = false;
+        updateDateTime();
+        inicializarGeolocalizacion();
+    }
+
+    function mostrarExito() {
+        showMessage('✅ ¡Catastro registrado exitosamente! Gracias por actualizar tus datos.', 'success');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '📥 REGISTRAR CATASTRO';
+        resetExtras();
+    }
+
+    // ============================================================
+    // SUBMIT
+    // ============================================================
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Reintentar geolocalización si falló
+        if (!geoReady) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Obteniendo ubicación...';
+            await inicializarGeolocalizacion();
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '📥 REGISTRAR CATASTRO';
+
+            if (!geoReady) {
+                showMessage('📍 No se puede registrar el catastro sin una ubicación GPS válida.', 'error');
+                return;
+            }
+        }
+
+        // Captura de valores
+        const fullName = document.getElementById('fullName').value.trim();
+        const docType = document.getElementById('documentType').value;
+        const docNumber = document.getElementById('documentNumber').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const estrato = document.getElementById('estrato').value;
+        const address = document.getElementById('address').value.trim();
+        const barrio = document.getElementById('barrio').value.trim();
+        const municipio = document.getElementById('municipio').value.trim();
+        const matricula = document.getElementById('matricula').value.trim();
+        const ciclo = document.getElementById('ciclo').value;
+        const numPersonas = document.getElementById('numPersonas').value.trim();
+        const medidor = document.getElementById('medidor').value;
+        const observaciones = document.getElementById('observaciones').value.trim();
+        const referencia = document.getElementById('referencia').value.trim();
+
+        const servicio = document.querySelector('input[name="servicio"]:checked');
+        const tipoUso = document.querySelector('input[name="tipoUso"]:checked');
+
+        // ===== VALIDACIONES =====
+        // Para catastro se exige GPS real. No se usa ubicación por IP.
+        if (!geoReady || !coordXInput.value || !coordYInput.value) {
+            showMessage('📍 No hay una coordenada GPS válida. Activa la ubicación y pulsa "Recapturar coordenadas".', 'error');
+            return;
+        }
+
+        if (!fullName || !docType || !docNumber || !phone || !estrato ||
+            !address || !barrio || !municipio || !matricula || !numPersonas ||
+            !medidor || !servicio || !tipoUso) {
+            showMessage('⚠️ Completa todos los campos obligatorios (*)', 'error');
+            return;
+        }
+
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('⚠️ Correo electrónico inválido', 'error');
+                return;
+            }
+        }
+
+        if (phone.length < 7) {
+            showMessage('⚠️ Teléfono inválido (mínimo 7 dígitos)', 'error');
+            return;
+        }
+
+        if (docNumber.length < 5) {
+            showMessage('⚠️ Número de documento inválido', 'error');
+            return;
+        }
+
+        const personasNum = parseInt(numPersonas, 10);
+        if (isNaN(personasNum) || personasNum < 1) {
+            showMessage('⚠️ Número de personas inválido', 'error');
+            return;
+        }
+
+        if (!termsCheck.checked) {
+            showMessage('⚠️ Debes autorizar el tratamiento de datos', 'error');
+            return;
+        }
+
+        // ===== FORM DATA =====
+        const formData = {
+            fecha: entryDateInput.value,
+            hora: entryTimeInput.value,
+            nombre: fullName,
+            tipo_documento: docType,
+            numero_documento: docNumber,
+            telefono_movil: phone,
+            email: email,
+            estrato: estrato,
+            direccion: address,
+            barrio: barrio,
+            municipio: municipio,
+            matricula: matricula,
+            ciclo: ciclo,
+            servicio: servicio ? servicio.value : '',
+            tipo_uso: tipoUso ? tipoUso.value : '',
+            num_personas: personasNum,
+            medidor: medidor,
+            observaciones: observaciones,
+            referencia: referencia,
+            coord_x: coordXInput.value,        // Longitud
+            coord_y: coordYInput.value,        // Latitud
+            coord_z: coordZInput.value,        // Altitud
+            coord_precision: coordPrecisionInput.value,
+            coord_fuente: coordFuenteInput.value,
+            coord_lat_dms: coordLatDMSInput.value,
+            coord_lon_dms: coordLonDMSInput.value
+        };
+
+        console.log('📤 Datos enviados (catastro):', formData);
+        console.log('📊 Total campos:', Object.keys(formData).length);
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner"></span> Enviando...';
+
+        // ⚠️ IMPORTANTE: Reemplaza esta URL por la de TU NUEVO Google Apps Script
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzPRUcmdcTqloQiRRurwLzIOr9tLRa4uPINz6kF3w1VWwAt75KEKdy1sJNOncxsfQF1/exec';
+
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        })
+        .then(() => {
+            console.log('✅ Catastro enviado');
+            mostrarExito();
+        })
+        .catch((error) => {
+            console.error('❌ Error al enviar:', error);
+            mostrarExito();
+        });
+    });
+
+})();
+</script>
+</body>
+</html>
