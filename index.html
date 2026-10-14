@@ -64,6 +64,11 @@
 
   .pending { display: none; background: #eef6ff; border: 1px solid #bcd7f5; color: #1a3a5c; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; align-items: center; justify-content: space-between; gap: 10px; }
   .pending.visible { display: flex; }
+  .server { display: none; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.5; }
+  .server.visible { display: block; }
+  .server.ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+  .server.error { background: #ffebee; color: #b71c1c; border: 1px solid #f5c6cb; }
+  .server.info { background: #fff8e1; color: #8a5a00; border: 1px solid #ffe082; }
 
   .message { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 500; display: none; }
   .message.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
@@ -84,6 +89,8 @@
     <h1>🏘️ CATASTRO DE USUARIOS</h1>
     <p class="subtitle">Levantamiento de predios, medidores y georreferenciación</p>
   </header>
+
+  <div id="serverBar" class="server" role="status"></div>
 
   <div id="pendingBar" class="pending">
     <span id="pendingText"></span>
@@ -140,6 +147,8 @@
   const PRECISION_MAXIMA_M = 30;          // > 30 m no deja registrar
   const FOTO_LADO_MAX = 1600;             // px del lado mayor tras comprimir
   const FOTO_CALIDAD = 0.72;              // calidad JPEG (0-1)
+  const ENVIO_TIMEOUT_S = 90;             // tiempo máximo por envío (redes lentas en zona rural)
+  const REINTENTO_COLA_S = 120;           // reintento automático de pendientes
 
   // Catálogos: deben coincidir con python/esquema.py
   const CAT = {
@@ -558,7 +567,7 @@
       tx.onerror = () => { db.close(); rej(tx.error); };
     });
   }
-  const encolar = p => cola('readwrite', s => s.put(p));
+  const encolar = p => cola('readwrite', s => s.put(Object.assign({ _creado: Date.now() }, p)));
   const pendientes = () => cola('readonly', s => s.getAll());
   const quitar = id => cola('readwrite', s => s.delete(id));
 
@@ -569,41 +578,93 @@
     $('pendingText').textContent = `📦 ${n} registro${n === 1 ? '' : 's'} guardado${n === 1 ? '' : 's'} en este celular sin enviar`;
   }
 
-  // Devuelve { ok, tipo: 'validacion' | 'servidor' | 'red', error }
-  async function enviar(payload) {
+  // ---------------------------------------------------------------------
+  // Comunicación con el Apps Script
+  // tipo: 'validacion' (datos rechazados, no se reintenta)
+  //       'red'        (celular sin internet)
+  //       'tiempo'     (la red respondió demasiado lento)
+  //       'acceso'     (hay internet pero Google no deja leer la respuesta:
+  //                     implementación sin acceso "Cualquier usuario" o sin autorizar)
+  //       'servidor'   (el script respondió con un error)
+  // ---------------------------------------------------------------------
+  const MSG_ACCESO = 'El servidor de Google no permitió el envío. En Apps Script: Implementar → Administrar implementaciones → ✏️ → Quién tiene acceso: "Cualquier usuario" → Versión nueva → Implementar.';
+
+  async function llamarServidor(opciones, segundos) {
+    if (!API_URL || API_URL.indexOf('script.google.com') < 0) {
+      return { ok: false, tipo: 'acceso', error: 'Falta configurar API_URL en el formulario.' };
+    }
+    if (!navigator.onLine) return { ok: false, tipo: 'red', error: 'Sin conexión a internet' };
+    const ctrl = window.AbortController ? new AbortController() : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), segundos * 1000) : null;
     let resp, txt;
     try {
-      resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) }); // text/plain: sin preflight CORS
+      resp = await fetch(API_URL, Object.assign({ redirect: 'follow', cache: 'no-store', signal: ctrl && ctrl.signal }, opciones));
       txt = await resp.text();
     } catch (err) {
-      return { ok: false, tipo: 'red', error: 'Sin conexión' };
-    }
+      if (err && err.name === 'AbortError') return { ok: false, tipo: 'tiempo', error: 'La red está muy lenta (más de ' + segundos + ' s sin respuesta)' };
+      if (!navigator.onLine) return { ok: false, tipo: 'red', error: 'Sin conexión a internet' };
+      return { ok: false, tipo: 'acceso', error: MSG_ACCESO };
+    } finally { if (t) clearTimeout(t); }
     try { return JSON.parse(txt); }
-    catch (_) { return { ok: false, tipo: 'servidor', error: 'Respuesta inesperada del servidor (HTTP ' + resp.status + ')' }; }
+    catch (_) {
+      if (/accounts\.google\.com|ServiceLogin|Iniciar sesión|Sign in/i.test(txt)) return { ok: false, tipo: 'acceso', error: MSG_ACCESO };
+      return { ok: false, tipo: 'servidor', error: 'Respuesta inesperada del servidor (HTTP ' + resp.status + ')' };
+    }
+  }
+
+  // text/plain (valor por defecto de un body string): evita la verificación previa CORS
+  const enviar = payload => llamarServidor({ method: 'POST', body: JSON.stringify(payload) }, ENVIO_TIMEOUT_S);
+
+  // Verifica el servidor al abrir la página (GET → doGet del Apps Script)
+  let servidorOK = false;
+  async function verificarServidor() {
+    const bar = $('serverBar');
+    const r = await llamarServidor({ method: 'GET' }, 20);
+    servidorOK = !!r.ok;
+    if (r.ok) {
+      bar.className = 'server ok visible';
+      bar.textContent = '🟢 Conectado al servidor del catastro.';
+      setTimeout(() => { if (servidorOK) bar.classList.remove('visible'); }, 4000);
+    } else if (r.tipo === 'red' || r.tipo === 'tiempo') {
+      bar.className = 'server info visible';
+      bar.textContent = '📶 ' + r.error + '. Puede seguir trabajando: los registros quedan guardados en el celular y se envían al recuperar señal.';
+    } else {
+      bar.className = 'server error visible';
+      bar.textContent = '🔴 ' + r.error + ' Mientras tanto los registros quedan guardados en el celular.';
+    }
+    return r.ok;
   }
 
   let enviandoCola = false;
   async function enviarPendientes(manual) {
     if (enviandoCola) return;
+    let lista = [];
+    try { lista = (await pendientes()).sort((a, b) => (a._creado || 0) - (b._creado || 0)); } catch (_) {}
+    if (!lista.length) { await pintarPendientes(); return; }
     enviandoCola = true;
-    const btn = $('btnPendientes'); btn.disabled = true; btn.textContent = 'Enviando...';
+    const btn = $('btnPendientes'); btn.disabled = true;
     let ok = 0, fallo = 0, ultimoError = '';
-    try {
-      for (const p of await pendientes()) {
-        const r = await enviar(p);
-        if (r.ok) { await quitar(p.id_envio); ok++; }
-        else { fallo++; ultimoError = r.error; if (r.tipo === 'red') break; }
+    for (let i = 0; i < lista.length; i++) {
+      btn.textContent = `Enviando ${i + 1} de ${lista.length}…`;
+      const r = await enviar(lista[i]);
+      if (r.ok) { try { await quitar(lista[i].id_envio); } catch (_) {} ok++; }
+      else {
+        fallo++; ultimoError = r.error;
+        if (r.tipo !== 'validacion' && r.tipo !== 'servidor') { fallo = lista.length - ok; break; } // red/acceso: no insistir con el resto
       }
-    } catch (_) {}
+    }
     enviandoCola = false; btn.disabled = false; btn.textContent = 'Enviar ahora';
     await pintarPendientes();
+    if (ok) { servidorOK = true; $('serverBar').classList.remove('visible'); }
     if (manual || ok) {
-      if (ok && !fallo) mensaje(`✅ ${ok} registro(s) pendiente(s) enviados.`, 'success');
-      else if (fallo) mensaje(`⚠️ Enviados ${ok}, sin enviar ${fallo}: ${ultimoError}`, 'error');
+      if (ok && !fallo) mensaje(`✅ ${ok} registro(s) pendiente(s) enviado(s) a la hoja.`, 'success');
+      else if (fallo) mensaje(`⚠️ Enviados ${ok}, siguen pendientes ${fallo}. ${ultimoError}`, 'error');
     }
   }
   $('btnPendientes').addEventListener('click', () => enviarPendientes(true));
-  window.addEventListener('online', () => enviarPendientes(false));
+  window.addEventListener('online', () => { verificarServidor(); enviarPendientes(false); });
+  window.addEventListener('offline', () => verificarServidor());
+  setInterval(() => { if (navigator.onLine && !enviandoCola) enviarPendientes(false); }, REINTENTO_COLA_S * 1000);
 
   // =====================================================================
   // SUBMIT
@@ -721,7 +782,8 @@
       await encolar(payload);
       limpiar();
       await pintarPendientes();
-      mensaje(`📦 ${r.tipo === 'red' ? 'Sin conexión' : r.error}. El registro quedó guardado en este celular y se enviará con "Enviar ahora" o al recuperar señal.`, 'info');
+      mensaje(`📦 El registro quedó guardado en este celular y se enviará automáticamente. Motivo: ${r.error}`, r.tipo === 'acceso' ? 'error' : 'info');
+      if (r.tipo === 'acceso') verificarServidor();
     } catch (_) {
       mensaje('❌ No se pudo enviar ni guardar en el celular: ' + r.error + '. No cierre la página e intente de nuevo.', 'error');
     }
@@ -729,7 +791,7 @@
 
   window.addEventListener('beforeunload', detenerRefinamiento);
   actualizarVisibilidad();
-  pintarPendientes().then(() => { if (navigator.onLine) enviarPendientes(false); });
+  pintarPendientes().then(() => verificarServidor()).then(ok => { if (ok) enviarPendientes(false); });
 })();
 </script>
 </body>
