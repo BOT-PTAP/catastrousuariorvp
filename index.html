@@ -141,7 +141,7 @@
   // =====================================================================
   // CONFIGURACIÓN
   // =====================================================================
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzK3q0x6lIYvrBvzEDFQT0JHncytiJ0_QGpXeIGONzmJU10Fmka4Mdn7gSA5KNcdSuw/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzO7Sj36P6yue-GSQqm3sSWq-UAM6Wch9W22C8LLav9V7e6dMjSVOWVpDdt23avSiZr/exec';
   const TOKEN = '';                       // opcional, igual a CONFIG.TOKEN del Apps Script
   const PRECISION_ADVERTENCIA_M = 15;     // > 15 m pide confirmación
   const PRECISION_MAXIMA_M = 30;          // > 30 m no deja registrar
@@ -587,7 +587,7 @@
   //                     implementación sin acceso "Cualquier usuario" o sin autorizar)
   //       'servidor'   (el script respondió con un error)
   // ---------------------------------------------------------------------
-  const MSG_ACCESO = 'El servidor de Google no permitió el envío. En Apps Script: Implementar → Administrar implementaciones → ✏️ → Quién tiene acceso: "Cualquier usuario" → Versión nueva → Implementar.';
+  const MSG_ACCESO = 'El servidor de Google no permitió el envío. En Apps Script: Implementar → Administrar implementaciones → ✏️ → Usuarios con acceso: "Cualquier persona" → Versión: Nueva versión → Implementar.';
 
   async function llamarServidor(opciones, segundos) {
     if (!API_URL || API_URL.indexOf('script.google.com') < 0) {
@@ -623,14 +623,14 @@
     servidorOK = !!r.ok;
     if (r.ok) {
       bar.className = 'server ok visible';
-      bar.textContent = '🟢 Conectado al servidor del catastro.';
+      bar.textContent = '🟢 Conectado al servidor del catastro' + (r.hoja ? ' · Hoja: ' + r.hoja : '') + (r.carpeta ? ' · Fotos: ' + r.carpeta : '') + '.';
       setTimeout(() => { if (servidorOK) bar.classList.remove('visible'); }, 4000);
     } else if (r.tipo === 'red' || r.tipo === 'tiempo') {
       bar.className = 'server info visible';
       bar.textContent = '📶 ' + r.error + '. Puede seguir trabajando: los registros quedan guardados en el celular y se envían al recuperar señal.';
     } else {
       bar.className = 'server error visible';
-      bar.textContent = '🔴 ' + r.error + ' Mientras tanto los registros quedan guardados en el celular.';
+      bar.textContent = (r.tipo === 'config' ? '🔴 Error de configuración del servidor: ' : '🔴 ') + r.error + ' Mientras tanto los registros quedan guardados en el celular.';
     }
     return r.ok;
   }
