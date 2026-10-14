@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#1a3a5c">
+<title>CATASTRO DE USUARIOS - RED VITAL PAIPA S.A. E.S.P.</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Tahoma, Geneva, Verdana, sans-serif; }
+  body { background: linear-gradient(135deg, #e8f0fe 0%, #d4e4f7 100%); min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
+  .container { background: #fff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.12); padding: 30px 25px; max-width: 760px; width: 100%; }
+  header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #f0f4f8; padding-bottom: 18px; }
+  .logo { max-width: 170px; height: auto; border-radius: 12px; padding: 5px; background: #f8fafc; }
+  header h1 { color: #1a3a5c; font-size: 22px; font-weight: 700; margin-top: 8px; }
+  header .subtitle { color: #5a7a9c; font-size: 14px; margin-top: 4px; }
+
+  .section { margin-bottom: 22px; }
+  .section-title { color: #1a3a5c; font-size: 15px; margin-bottom: 12px; border-left: 4px solid #2a7a9c; padding-left: 10px; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  .full { grid-column: 1 / -1; }
+  @media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
+
+  .form-group { margin-bottom: 16px; }
+  label.lbl { display: block; font-weight: 600; color: #1a3a5c; font-size: 14px; margin-bottom: 5px; }
+  .req { color: #e74c3c; margin-left: 2px; }
+  .opt { color: #95a5a6; font-weight: 400; font-size: 12px; }
+  .hint { color: #64748b; font-size: 12px; margin-top: 4px; }
+  input, select, textarea { width: 100%; padding: 12px 14px; border: 2px solid #e0e8f0; border-radius: 10px; font-size: 15px; background: #fafcfe; transition: border-color .2s, box-shadow .2s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #2a7a9c; box-shadow: 0 0 0 3px rgba(42,122,156,.15); background: #fff; }
+  .form-group.invalid input, .form-group.invalid select, .form-group.invalid textarea,
+  .form-group.invalid .seg, .form-group.invalid .photo-box { border-color: #e74c3c; }
+  .err { display: none; color: #c0392b; font-size: 12px; margin-top: 4px; }
+  .form-group.invalid .err { display: block; }
+
+  /* Selector Sí/No segmentado */
+  .seg { display: flex; border: 2px solid #e0e8f0; border-radius: 10px; overflow: hidden; }
+  .seg label { flex: 1; text-align: center; padding: 11px 6px; cursor: pointer; font-size: 14px; color: #2c3e50; background: #fafcfe; border-right: 1px solid #e0e8f0; }
+  .seg label:last-child { border-right: 0; }
+  .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .seg input:checked + span { font-weight: 700; color: #fff; }
+  .seg label:has(input:checked) { background: #2a5a7c; color: #fff; }
+  .seg input:focus-visible + span { outline: 2px solid #2a7a9c; outline-offset: 3px; }
+
+  /* Fotos */
+  .photo-box { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 12px; background: #f8fafc; display: flex; gap: 12px; align-items: center; }
+  .photo-box img { width: 92px; height: 92px; object-fit: cover; border-radius: 8px; background: #e2e8f0; flex-shrink: 0; }
+  .photo-box .ph-actions { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+  .btn-photo { padding: 12px; border: 0; border-radius: 10px; background: linear-gradient(135deg, #1a3a5c, #2a7a9c); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .ph-status { font-size: 12px; color: #475569; overflow-wrap: anywhere; }
+
+  .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, #1a3a5c, #2a5a7c); color: #fff; border: 0; border-radius: 10px; font-size: 17px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .btn-primary:disabled, .btn-gps:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-gps { width: 100%; padding: 14px; background: linear-gradient(135deg, #2e7d32, #43a047); color: #fff; border: 0; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .btn-sec { padding: 8px 14px; border: 0; border-radius: 8px; background: #2a7a9c; color: #fff; font-weight: 600; cursor: pointer; font-size: 13px; }
+
+  .geo-badge { display: inline-block; background: #fff3e0; color: #ef6c00; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+  .geo-badge.ok { background: #e8f5e9; color: #2e7d32; }
+  .geo-badge.warn { background: #fff8e1; color: #b9770e; }
+  .geo-badge.error { background: #ffebee; color: #c62828; }
+  .geo-box { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #475569; margin: 12px 0; line-height: 1.6; }
+  .geo-box strong { color: #1a3a5c; }
+  .gps-guide { display: none; background: #fff8e1; border-left: 5px solid #f39c12; border-radius: 10px; padding: 12px 16px; margin: 10px 0; font-size: 13px; color: #5d4037; line-height: 1.6; }
+  .gps-guide.visible { display: block; }
+
+  .pending { display: none; background: #eef6ff; border: 1px solid #bcd7f5; color: #1a3a5c; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; align-items: center; justify-content: space-between; gap: 10px; }
+  .pending.visible { display: flex; }
+
+  .message { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 500; display: none; }
+  .message.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+  .message.error { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  .message.info { display: block; background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin .8s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+  footer { text-align: center; margin-top: 22px; color: #95a5a6; font-size: 11px; border-top: 1px solid #f0f4f8; padding-top: 14px; }
+  @media (max-width: 480px) { body { padding: 10px; } .container { padding: 20px 16px; } header h1 { font-size: 18px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <img src="https://res.cloudinary.com/ddr2mfii6/image/upload/v1776795062/Logo_Red_Vital_Paipa_2024_Original_g66es5.png" alt="Red Vital Paipa" class="logo">
+    <h1>🏘️ CATASTRO DE USUARIOS</h1>
+    <p class="subtitle">Levantamiento de predios, medidores y georreferenciación</p>
+  </header>
+
+  <div id="pendingBar" class="pending">
+    <span id="pendingText"></span>
+    <button type="button" class="btn-sec" id="btnPendientes">Enviar ahora</button>
+  </div>
+
+  <form id="catastroForm" novalidate>
+    <div id="secciones"></div>
+
+    <!-- Georreferenciación -->
+    <div class="section" id="secGeo">
+      <h3 class="section-title">📍 GEORREFERENCIACIÓN DEL PREDIO</h3>
+      <div id="geoStatus" class="geo-badge">📍 GPS no activado — toque "ACTIVAR GPS"</div>
+      <div id="gpsGuide" class="gps-guide"></div>
+      <button type="button" class="btn-gps" id="btnGPS">🛰️ ACTIVAR GPS Y CAPTURAR UBICACIÓN</button>
+      <div class="geo-box" id="geoDetail">Párese frente al predio y capture la ubicación.</div>
+    </div>
+
+    <div class="section">
+      <h3 class="section-title">📝 CIERRE</h3>
+      <div class="fields">
+        <div class="form-group full" data-k="observaciones">
+          <label class="lbl" for="f_observaciones">Observaciones <span class="opt">(opcional)</span></label>
+          <textarea id="f_observaciones" name="observaciones" rows="3" placeholder="Novedades del predio, acceso, perros, etc."></textarea>
+        </div>
+        <div class="form-group full" data-k="encuestador">
+          <label class="lbl" for="f_encuestador">Encuestador (quien levanta la información) <span class="req">*</span></label>
+          <input id="f_encuestador" name="encuestador" type="text" placeholder="Nombre del técnico" autocomplete="name">
+          <div class="err">Escriba el nombre del encuestador</div>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary" id="submitBtn">📥 REGISTRAR CATASTRO</button>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+  </form>
+
+  <footer>
+    <p>© 2026 Todos los derechos reservados.</p>
+    <p>RED VITAL PAIPA S.A. E.S.P. - NIT 900259348</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // =====================================================================
+  // CONFIGURACIÓN
+  // =====================================================================
+  const API_URL = 'https://script.google.com/macros/s/AKfycbx4GAo5r9tPD2FdTPQIctu0j4D-MaU8Qn6ofoTcm6x-VB6uhziCJOOEfMiNOKDJdLwcwg/exec';
+  const TOKEN = '';                       // opcional, igual a CONFIG.TOKEN del Apps Script
+  const PRECISION_ADVERTENCIA_M = 15;     // > 15 m pide confirmación
+  const PRECISION_MAXIMA_M = 30;          // > 30 m no deja registrar
+  const FOTO_LADO_MAX = 1600;             // px del lado mayor tras comprimir
+  const FOTO_CALIDAD = 0.72;              // calidad JPEG (0-1)
+
+  // Catálogos: deben coincidir con python/esquema.py
+  const CAT = {
+    condicion_predio: ['Construido', 'En construcción', 'Lote', 'Desocupado', 'Demolido'],
+    tipo_medidor: ['Volumétrico', 'Velocidad chorro único', 'Velocidad chorro múltiple', 'Electromagnético', 'Ultrasónico', 'Sin medidor'],
+    diametro_medidor: ['1/2"', '3/4"', '1"', '1 1/2"', '2"', '3"', '4"', '6"'],
+    ubicacion_medidor: ['Piso', 'Pared'],
+    posicion_medidor: ['Horizontal', 'Vertical', 'Inclinado', 'Invertido'],
+    estado_medidor: ['Bueno', 'Regular', 'Malo'],
+    sello_seguridad: ['Sí', 'No', 'Roto'],
+    estado_registro_corte: ['Bueno', 'Malo', 'No tiene'],
+    estado_cajilla_tapa: ['Buena', 'Deteriorada', 'Sin tapa', 'No tiene cajilla'],
+    estado_servicio: ['Activo', 'Suspendido', 'Cortado', 'Retirado'],
+    uso: ['Residencial', 'Comercial', 'Industrial', 'Oficial', 'Especial', 'Mixto', 'Provisional'],
+    tipo: ['Casa', 'Apartamento', 'Local', 'Bodega', 'Edificio', 'Finca', 'Lote', 'Otro'],
+    estrato: ['1', '2', '3', '4', '5', '6'],
+    si_no: ['Sí', 'No']
+  };
+  const SUGERENCIAS_DETALLE = ['Frenado', 'Carátula empañada', 'Carátula rota', 'Ilegible', 'Con fuga', 'Manipulado', 'Enterrado', 'Inaccesible'];
+
+  // Reglas condicionales (mismas que python/esquema.py)
+  const tieneMedidor = d => !!d.tipo_medidor && d.tipo_medidor !== 'Sin medidor';
+  const esResidencial = d => d.uso === 'Residencial';
+  const usaEstrato = d => d.uso === 'Residencial' || d.uso === 'Mixto';
+  const estadoNoBueno = d => tieneMedidor(d) && (d.estado_medidor === 'Regular' || d.estado_medidor === 'Malo');
+  const anioActual = new Date().getFullYear();
+
+  // t: text | select | number | seg (Sí/No) | photo
+  // req: true | función(datos)   show: función(datos)   full: ocupa 2 columnas
+  const SECCIONES = [
+    { titulo: '🪪 IDENTIFICACIÓN DEL USUARIO', campos: [
+      { k: 'id_usuario', l: 'ID usuario (cuenta / matrícula)', t: 'text', req: true, ph: 'Ej: 0012345', filtro: /[^0-9A-Za-z-]/g, mode: 'numeric' },
+      { k: 'id_ruta', l: 'ID ruta', t: 'text', req: true, ph: 'Ej: R-05', filtro: /[^0-9A-Za-z-]/g },
+      { k: 'nombre', l: 'Nombre del suscriptor', t: 'text', req: true, ph: 'Ej: Juan Carlos Ramírez López', full: true },
+      { k: 'direccion', l: 'Dirección', t: 'text', req: true, ph: 'Ej: Carrera 5 # 12-34', full: true },
+      { k: 'barrio', l: 'Barrio / Vereda', t: 'text', req: true, ph: 'Ej: El Centro' },
+      { k: 'codigo_catastral', l: 'Código catastral', t: 'text', ph: '20 o 30 dígitos (IGAC)', filtro: /\D/g, mode: 'numeric',
+        valida: v => !v || v.length === 20 || v.length === 30 || 'Debe tener 20 o 30 dígitos' },
+      { k: 'foto_fachada', l: 'Foto de la fachada (con la dirección visible)', t: 'photo', req: true, full: true }
+    ]},
+    { titulo: '🏠 PREDIO Y SERVICIO', campos: [
+      { k: 'condicion_predio', l: 'Condición del predio', t: 'select', req: true },
+      { k: 'tipo', l: 'Tipo de inmueble', t: 'select', req: true },
+      { k: 'uso', l: 'Uso', t: 'select', req: true },
+      { k: 'estrato', l: 'Estrato', t: 'select', req: esResidencial, show: usaEstrato },
+      { k: 'estado_servicio', l: 'Estado del servicio', t: 'select', req: true },
+      { k: 'sector_hidraulico', l: 'Sector hidráulico', t: 'text', ph: 'Ej: Sector 3' },
+      { k: 'acueducto', l: 'Acueducto', t: 'seg', cat: 'si_no', req: true },
+      { k: 'alcantarillado', l: 'Alcantarillado', t: 'seg', cat: 'si_no', req: true },
+      { k: 'aseo', l: 'Aseo', t: 'seg', cat: 'si_no', req: true }
+    ]},
+    { titulo: '🔧 MEDIDOR Y ACOMETIDA', campos: [
+      { k: 'tipo_medidor', l: 'Tipo de medidor', t: 'select', req: true, full: true },
+      { k: 'numero_medidor', l: 'Número del medidor', t: 'text', req: tieneMedidor, show: tieneMedidor, filtro: /[^0-9A-Za-z-]/g },
+      { k: 'marca_medidor', l: 'Marca', t: 'text', show: tieneMedidor, ph: 'Ej: Itron' },
+      { k: 'diametro_medidor', l: 'Diámetro', t: 'select', req: tieneMedidor, show: tieneMedidor },
+      { k: 'anio_instalacion', l: 'Año de instalación', t: 'number', show: tieneMedidor, min: 1950, max: anioActual, step: 1, ph: 'Ej: 2018' },
+      { k: 'ubicacion_medidor', l: 'Ubicación (piso o pared)', t: 'seg', cat: 'ubicacion_medidor', req: tieneMedidor, show: tieneMedidor },
+      { k: 'posicion_medidor', l: 'Posición', t: 'select', req: tieneMedidor, show: tieneMedidor },
+      { k: 'lectura_actual', l: 'Lectura actual (m³)', t: 'number', req: tieneMedidor, show: tieneMedidor, min: 0, step: 'any', ph: 'Ej: 1234' },
+      { k: 'sello_seguridad', l: 'Sello de seguridad', t: 'select', req: tieneMedidor, show: tieneMedidor },
+      { k: 'estado_medidor', l: 'Estado del medidor', t: 'select', req: tieneMedidor, show: tieneMedidor },
+      { k: 'detalle_estado', l: 'Detalle del estado', t: 'text', req: estadoNoBueno, show: tieneMedidor, lista: SUGERENCIAS_DETALLE, ph: 'Ej: Carátula empañada' },
+      { k: 'foto_medidor', l: 'Foto del medidor (lectura y número legibles)', t: 'photo', req: tieneMedidor, show: tieneMedidor, full: true },
+      { k: 'estado_registro_corte', l: 'Estado del registro de corte', t: 'select', req: true },
+      { k: 'estado_cajilla_tapa', l: 'Estado de la cajilla y/o tapa', t: 'select', req: true }
+    ]}
+  ];
+
+  const $ = id => document.getElementById(id);
+  const form = $('catastroForm');
+  const submitBtn = $('submitBtn');
+  const messageDiv = $('message');
+  const CAMPOS = [];
+  const fotos = {};   // clave -> File
+
+  // =====================================================================
+  // CONSTRUCCIÓN DEL FORMULARIO
+  // =====================================================================
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  function htmlCampo(c) {
+    const id = 'f_' + c.k;
+    const marca = c.req ? '<span class="req">*</span>' : '<span class="opt">(opcional)</span>';
+    const opciones = CAT[c.cat || c.k] || [];
+    let control = '';
+    if (c.t === 'select') {
+      control = `<select id="${id}" name="${c.k}"><option value="">Seleccione</option>` +
+        opciones.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('') + '</select>';
+    } else if (c.t === 'seg') {
+      control = `<div class="seg" role="radiogroup">` + opciones.map(o =>
+        `<label><input type="radio" name="${c.k}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('') + '</div>';
+    } else if (c.t === 'photo') {
+      control = `<div class="photo-box">
+          <img id="${id}_prev" alt="" hidden>
+          <div class="ph-actions">
+            <button type="button" class="btn-photo" data-foto="${c.k}">📷 Tomar foto</button>
+            <span class="ph-status" id="${id}_st">Sin foto</span>
+          </div>
+          <input type="file" id="${id}" accept="image/*" capture="environment" hidden>
+        </div>`;
+    } else if (c.t === 'number') {
+      control = `<input id="${id}" name="${c.k}" type="number" inputmode="decimal"` +
+        (c.min !== undefined ? ` min="${c.min}"` : '') + (c.max !== undefined ? ` max="${c.max}"` : '') +
+        ` step="${c.step || 'any'}" placeholder="${esc(c.ph || '')}">`;
+    } else {
+      control = `<input id="${id}" name="${c.k}" type="text" placeholder="${esc(c.ph || '')}"` +
+        (c.mode ? ` inputmode="${c.mode}"` : '') + (c.lista ? ` list="${id}_dl"` : '') + ' autocomplete="off">' +
+        (c.lista ? `<datalist id="${id}_dl">${c.lista.map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : '');
+    }
+    const forAttr = (c.t === 'seg' || c.t === 'photo') ? '' : ` for="${id}"`;
+    return `<div class="form-group${c.full ? ' full' : ''}" data-k="${c.k}">
+      <label class="lbl"${forAttr}>${esc(c.l)} ${marca}</label>${control}<div class="err"></div></div>`;
+  }
+
+  $('secciones').innerHTML = SECCIONES.map(s =>
+    `<div class="section"><h3 class="section-title">${s.titulo}</h3><div class="fields">` +
+    s.campos.map(htmlCampo).join('') + '</div></div>').join('');
+
+  SECCIONES.forEach(s => s.campos.forEach(c => CAMPOS.push(c)));
+  CAMPOS.push({ k: 'observaciones', t: 'text' }, { k: 'encuestador', t: 'text', req: true });
+
+  // Filtros de caracteres en vivo
+  CAMPOS.filter(c => c.filtro).forEach(c => {
+    $('f_' + c.k).addEventListener('input', e => { e.target.value = e.target.value.replace(c.filtro, ''); });
+  });
+
+  // Fotos
+  document.querySelectorAll('[data-foto]').forEach(btn => {
+    const k = btn.dataset.foto;
+    const input = $('f_' + k);
+    btn.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)) { $('f_' + k + '_st').textContent = '⚠️ El archivo no es una imagen'; return; }
+      fotos[k] = file;
+      const prev = $('f_' + k + '_prev');
+      if (prev.src) URL.revokeObjectURL(prev.src);
+      prev.src = URL.createObjectURL(file);
+      prev.hidden = false;
+      btn.textContent = '🔄 Repetir foto';
+      $('f_' + k + '_st').textContent = '✅ Foto lista (' + (file.size / 1048576).toFixed(1) + ' MB, se comprimirá al enviar)';
+      marcarError(k, '');
+      input.value = '';
+    });
+  });
+
+  // Encuestador recordado en este celular
+  try { $('f_encuestador').value = localStorage.getItem('rvp_encuestador') || ''; } catch (_) {}
+
+  // =====================================================================
+  // LECTURA, VISIBILIDAD Y VALIDACIÓN
+  // =====================================================================
+  function valorCrudo(c) {
+    if (c.t === 'seg') { const r = form.querySelector(`input[name="${c.k}"]:checked`); return r ? r.value : ''; }
+    if (c.t === 'photo') return fotos[c.k] ? '1' : '';
+    const el = $('f_' + c.k); return el ? el.value.trim() : '';
+  }
+
+  function leerDatos() {
+    const d = {};
+    CAMPOS.forEach(c => { d[c.k] = valorCrudo(c); });
+    // Los campos ocultos se envían vacíos
+    CAMPOS.forEach(c => { if (c.show && !c.show(d)) d[c.k] = ''; });
+    return d;
+  }
+
+  function actualizarVisibilidad() {
+    const d = leerDatos();
+    CAMPOS.forEach(c => {
+      if (!c.show) return;
+      const g = form.querySelector(`.form-group[data-k="${c.k}"]`);
+      const visible = c.show(d);
+      g.classList.toggle('hidden', !visible);
+      if (!visible) g.classList.remove('invalid');
+    });
+    // Marca de obligatorio dinámica
+    CAMPOS.forEach(c => {
+      if (typeof c.req !== 'function') return;
+      const span = form.querySelector(`.form-group[data-k="${c.k}"] .lbl span`);
+      if (!span) return;
+      const r = c.req(d);
+      span.className = r ? 'req' : 'opt';
+      span.textContent = r ? '*' : '(opcional)';
+    });
+  }
+  form.addEventListener('change', actualizarVisibilidad);
+  form.addEventListener('input', e => {
+    const g = e.target.closest('.form-group'); if (g) g.classList.remove('invalid');
+  });
+
+  function marcarError(k, msg) {
+    const g = form.querySelector(`.form-group[data-k="${k}"]`);
+    if (!g) return;
+    g.classList.toggle('invalid', !!msg);
+    const e = g.querySelector('.err'); if (e) e.textContent = msg || '';
+  }
+
+  function validar(d) {
+    const errores = [];
+    CAMPOS.forEach(c => {
+      if (c.show && !c.show(d)) return;
+      const v = d[c.k];
+      const obligatorio = typeof c.req === 'function' ? c.req(d) : !!c.req;
+      let msg = '';
+      if (obligatorio && !v) msg = c.t === 'photo' ? 'Tome la foto' : 'Campo obligatorio';
+      else if (v && c.t === 'number') {
+        const n = Number(v);
+        if (!Number.isFinite(n)) msg = 'Número inválido';
+        else if (c.min !== undefined && n < c.min) msg = 'Mínimo ' + c.min;
+        else if (c.max !== undefined && n > c.max) msg = 'Máximo ' + c.max;
+        else if (c.step === 1 && !Number.isInteger(n)) msg = 'Debe ser un número entero';
+      }
+      if (!msg && c.valida) { const r = c.valida(v, d); if (r !== true) msg = r; }
+      marcarError(c.k, msg);
+      if (msg) errores.push(c.k);
+    });
+    return errores;
+  }
+
+  // =====================================================================
+  // GEOLOCALIZACIÓN (solo GPS; sin ubicación aproximada por IP)
+  // =====================================================================
+  let geo = null;          // { lon, lat, alt, acc, fuente, t }
+  let watchId = null;
+
+  const UA = navigator.userAgent || '';
+  const esAndroid = /Android/i.test(UA);
+  const esIOS = /iPhone|iPad|iPod/i.test(UA);
+
+  function estadoGeo(clase, texto) { const b = $('geoStatus'); b.className = 'geo-badge ' + clase; b.textContent = texto; }
+  function guia(html) { const g = $('gpsGuide'); g.innerHTML = html || ''; g.classList.toggle('visible', !!html); }
+
+  function clasificar(acc) {
+    if (acc <= 5) return 'Alta';
+    if (acc <= PRECISION_ADVERTENCIA_M) return 'Aceptable';
+    if (acc <= PRECISION_MAXIMA_M) return 'Baja';
+    return 'No recomendable';
+  }
+
+  function dms(dec, tipo) {
+    const a = Math.abs(dec), g = Math.floor(a), mf = (a - g) * 60, m = Math.floor(mf), s = (mf - m) * 60;
+    const dir = tipo === 'lat' ? (dec >= 0 ? 'N' : 'S') : (dec >= 0 ? 'E' : 'W');
+    return `${g}° ${String(m).padStart(2, '0')}′ ${s.toFixed(2).padStart(5, '0')}″ ${dir}`;
+  }
+
+  function pintarGeo() {
+    const box = $('geoDetail');
+    if (!geo) { box.innerHTML = 'Párese frente al predio y capture la ubicación.'; return; }
+    const cls = geo.acc <= PRECISION_ADVERTENCIA_M ? 'ok' : (geo.acc <= PRECISION_MAXIMA_M ? 'warn' : 'error');
+    estadoGeo(cls, (cls === 'ok' ? '✅' : '⚠️') + ' GPS ±' + geo.acc.toFixed(0) + ' m — precisión ' + clasificar(geo.acc));
+    box.innerHTML =
+      `<strong>Longitud (X):</strong> ${geo.lon.toFixed(8)} &nbsp; <strong>Latitud (Y):</strong> ${geo.lat.toFixed(8)}<br>` +
+      `<strong>Altitud (Z):</strong> ${geo.alt === null ? 'N/D' : geo.alt.toFixed(2) + ' m'} &nbsp; ` +
+      `<strong>Precisión:</strong> ${geo.acc.toFixed(1)} m &nbsp; <strong>Fuente:</strong> ${geo.fuente}<br>` +
+      `<strong>GMS:</strong> ${dms(geo.lat, 'lat')}, ${dms(geo.lon, 'lon')}` +
+      (geo.acc > PRECISION_MAXIMA_M ? '<br><strong style="color:#c62828">Precisión insuficiente: salga a cielo abierto y recapture.</strong>' : '');
+  }
+
+  function tomarPosicion(p, fuente) {
+    const c = p.coords;
+    if (!Number.isFinite(c.latitude) || !Number.isFinite(c.longitude)) return false;
+    const acc = Number.isFinite(c.accuracy) ? c.accuracy : 9999;
+    if (geo && acc >= geo.acc) return false;
+    geo = { lon: c.longitude, lat: c.latitude, alt: Number.isFinite(c.altitude) ? c.altitude : null, acc, fuente, t: Date.now() };
+    pintarGeo();
+    return true;
+  }
+
+  function detenerRefinamiento() {
+    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  }
+
+  function refinar() {
+    detenerRefinamiento();
+    let lecturas = 0;
+    watchId = navigator.geolocation.watchPosition(p => {
+      lecturas++;
+      tomarPosicion(p, 'GPS (refinado)');
+      if (lecturas >= 8 || (geo && geo.acc <= 5)) detenerRefinamiento();
+    }, () => detenerRefinamiento(), { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+    setTimeout(detenerRefinamiento, 20000);
+  }
+
+  function capturarGPS() {
+    return new Promise(resolve => {
+      guia('');
+      if (!window.isSecureContext) {
+        estadoGeo('error', '⚠️ Se requiere HTTPS para el GPS');
+        guia('🔒 Abra el formulario con una dirección <strong>https://</strong>.');
+        return resolve(false);
+      }
+      if (!navigator.geolocation) { estadoGeo('error', '❌ Este navegador no tiene GPS'); return resolve(false); }
+      detenerRefinamiento();
+      geo = null;
+      estadoGeo('', '📍 Buscando señal GPS...');
+      navigator.geolocation.getCurrentPosition(p => {
+        tomarPosicion(p, 'GPS');
+        refinar();
+        resolve(true);
+      }, err => {
+        if (err.code === 1) {
+          estadoGeo('error', '❌ Permiso de ubicación denegado');
+          guia(esAndroid ? '📱 <strong>Android:</strong> toque el candado 🔒 junto a la dirección → Permisos → Ubicación → <strong>Permitir</strong>, y vuelva a tocar "ACTIVAR GPS".'
+            : esIOS ? '📱 <strong>iPhone:</strong> Ajustes → Privacidad → Localización → Safari → <strong>Mientras se usa</strong>, y active "Ubicación exacta".'
+            : 'Permita la ubicación en la configuración del navegador.');
+        } else {
+          estadoGeo('error', err.code === 3 ? '⏱️ Tiempo agotado buscando GPS' : '📡 Señal GPS no disponible');
+          guia('📡 Salga a cielo abierto, lejos de techos y muros altos; espere 20 segundos y toque de nuevo "ACTIVAR GPS".');
+        }
+        pintarGeo();
+        resolve(false);
+      }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+    });
+  }
+
+  $('btnGPS').addEventListener('click', async () => {
+    const b = $('btnGPS');
+    b.disabled = true; b.innerHTML = '<span class="spinner"></span> Capturando ubicación...';
+    const ok = await capturarGPS();
+    if (ok && messageDiv.className.includes('error')) messageDiv.className = 'message';
+    b.disabled = false; b.innerHTML = '🔄 RECAPTURAR UBICACIÓN';
+  });
+
+  // =====================================================================
+  // FOTOS: compresión + marca de agua con datos del levantamiento
+  // =====================================================================
+  async function cargarImagen(file) {
+    if (window.createImageBitmap) {
+      try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch (_) {}
+    }
+    return new Promise((res, rej) => {
+      const img = new Image(); const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); res(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la foto')); };
+      img.src = url;
+    });
+  }
+
+  async function procesarFoto(file, etiqueta, d) {
+    const img = await cargarImagen(file);
+    const w0 = img.width, h0 = img.height;
+    const escala = Math.min(1, FOTO_LADO_MAX / Math.max(w0, h0));
+    const w = Math.round(w0 * escala), h = Math.round(h0 * escala);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    if (img.close) img.close();
+
+    const lineas = [
+      `RED VITAL PAIPA · ${etiqueta} · ID ${d.id_usuario}`,
+      `${d.direccion} · ${d.barrio}`.slice(0, 70),
+      `${d.fecha_registro} ${d.hora_registro} · ${Number(d.latitud).toFixed(6)}, ${Number(d.longitud).toFixed(6)} ±${Math.round(d.precision_m)} m`
+    ];
+    const fs = Math.max(13, Math.round(w * 0.024));
+    const alto = Math.round(lineas.length * fs * 1.35 + fs * 0.8);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, h - alto, w, alto);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `600 ${fs}px Arial, sans-serif`;
+    ctx.textBaseline = 'top';
+    lineas.forEach((t, i) => ctx.fillText(t, Math.round(fs * 0.5), h - alto + Math.round(fs * 0.4) + i * fs * 1.35, w - fs));
+    return cv.toDataURL('image/jpeg', FOTO_CALIDAD);
+  }
+
+  // =====================================================================
+  // ENVÍO + COLA SIN CONEXIÓN (IndexedDB)
+  // =====================================================================
+  const DB_NOMBRE = 'rvp_catastro', STORE = 'pendientes';
+  function abrirDB() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open(DB_NOMBRE, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath: 'id_envio' });
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+  }
+  async function cola(modo, fn) {
+    const db = await abrirDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, modo);
+      const req = fn(tx.objectStore(STORE));
+      tx.oncomplete = () => { db.close(); res(req ? req.result : undefined); };
+      tx.onerror = () => { db.close(); rej(tx.error); };
+    });
+  }
+  const encolar = p => cola('readwrite', s => s.put(p));
+  const pendientes = () => cola('readonly', s => s.getAll());
+  const quitar = id => cola('readwrite', s => s.delete(id));
+
+  async function pintarPendientes() {
+    let n = 0;
+    try { n = (await pendientes()).length; } catch (_) {}
+    $('pendingBar').classList.toggle('visible', n > 0);
+    $('pendingText').textContent = `📦 ${n} registro${n === 1 ? '' : 's'} guardado${n === 1 ? '' : 's'} en este celular sin enviar`;
+  }
+
+  // Devuelve { ok, tipo: 'validacion' | 'servidor' | 'red', error }
+  async function enviar(payload) {
+    let resp, txt;
+    try {
+      resp = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) }); // text/plain: sin preflight CORS
+      txt = await resp.text();
+    } catch (err) {
+      return { ok: false, tipo: 'red', error: 'Sin conexión' };
+    }
+    try { return JSON.parse(txt); }
+    catch (_) { return { ok: false, tipo: 'servidor', error: 'Respuesta inesperada del servidor (HTTP ' + resp.status + ')' }; }
+  }
+
+  let enviandoCola = false;
+  async function enviarPendientes(manual) {
+    if (enviandoCola) return;
+    enviandoCola = true;
+    const btn = $('btnPendientes'); btn.disabled = true; btn.textContent = 'Enviando...';
+    let ok = 0, fallo = 0, ultimoError = '';
+    try {
+      for (const p of await pendientes()) {
+        const r = await enviar(p);
+        if (r.ok) { await quitar(p.id_envio); ok++; }
+        else { fallo++; ultimoError = r.error; if (r.tipo === 'red') break; }
+      }
+    } catch (_) {}
+    enviandoCola = false; btn.disabled = false; btn.textContent = 'Enviar ahora';
+    await pintarPendientes();
+    if (manual || ok) {
+      if (ok && !fallo) mensaje(`✅ ${ok} registro(s) pendiente(s) enviados.`, 'success');
+      else if (fallo) mensaje(`⚠️ Enviados ${ok}, sin enviar ${fallo}: ${ultimoError}`, 'error');
+    }
+  }
+  $('btnPendientes').addEventListener('click', () => enviarPendientes(true));
+  window.addEventListener('online', () => enviarPendientes(false));
+
+  // =====================================================================
+  // SUBMIT
+  // =====================================================================
+  function mensaje(texto, tipo) {
+    messageDiv.textContent = texto; messageDiv.className = 'message ' + tipo;
+    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function ahoraBogota() {
+    const n = new Date();
+    return {
+      fecha: n.toLocaleDateString('es-CO', { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' }),
+      hora: n.toLocaleTimeString('en-GB', { timeZone: 'America/Bogota', hour12: false })
+    };
+  }
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+  }
+
+  function ocupado(si, texto) {
+    submitBtn.disabled = si;
+    submitBtn.innerHTML = si ? `<span class="spinner"></span> ${texto}` : '📥 REGISTRAR CATASTRO';
+  }
+
+  function limpiar() {
+    form.reset();
+    Object.keys(fotos).forEach(k => {
+      delete fotos[k];
+      const prev = $('f_' + k + '_prev'); if (prev.src) URL.revokeObjectURL(prev.src); prev.removeAttribute('src'); prev.hidden = true;
+      $('f_' + k + '_st').textContent = 'Sin foto';
+      form.querySelector(`[data-foto="${k}"]`).textContent = '📷 Tomar foto';
+    });
+    form.querySelectorAll('.form-group.invalid').forEach(g => g.classList.remove('invalid'));
+    try { $('f_encuestador').value = localStorage.getItem('rvp_encuestador') || ''; } catch (_) {}
+    detenerRefinamiento(); geo = null;               // cada predio exige su propia ubicación
+    estadoGeo('', '📍 GPS no activado — toque "ACTIVAR GPS"');
+    $('btnGPS').innerHTML = '🛰️ ACTIVAR GPS Y CAPTURAR UBICACIÓN';
+    pintarGeo(); actualizarVisibilidad();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    messageDiv.className = 'message';
+    const d = leerDatos();
+    const errores = validar(d);
+    if (errores.length) {
+      mensaje(`⚠️ Revise ${errores.length} campo(s) marcados en rojo.`, 'error');
+      const g = form.querySelector(`.form-group[data-k="${errores[0]}"]`);
+      if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (!geo) {
+      mensaje('📍 Falta la ubicación GPS del predio. Toque "ACTIVAR GPS".', 'error');
+      $('secGeo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (geo.acc > PRECISION_MAXIMA_M) {
+      mensaje(`📍 La precisión del GPS (±${geo.acc.toFixed(0)} m) supera ${PRECISION_MAXIMA_M} m. Recapture a cielo abierto.`, 'error');
+      return;
+    }
+    if (geo.acc > PRECISION_ADVERTENCIA_M &&
+        !confirm(`La precisión del GPS es baja (±${geo.acc.toFixed(0)} m). ¿Registrar de todas formas?`)) return;
+
+    detenerRefinamiento();
+    try { localStorage.setItem('rvp_encuestador', d.encuestador); } catch (_) {}
+    const t = ahoraBogota();
+    const payload = Object.assign({}, d, {
+      longitud: Number(geo.lon.toFixed(8)),
+      latitud: Number(geo.lat.toFixed(8)),
+      altitud: geo.alt === null ? '' : Number(geo.alt.toFixed(2)),
+      precision_m: Number(geo.acc.toFixed(1)),
+      fuente_coord: geo.fuente,
+      fecha_registro: t.fecha,
+      hora_registro: t.hora,
+      id_envio: uuid(),
+      token: TOKEN
+    });
+    delete payload.foto_fachada; delete payload.foto_medidor;   // el servidor pone el enlace de Drive
+
+    try {
+      ocupado(true, 'Procesando fotos...');
+      payload.foto_fachada_b64 = await procesarFoto(fotos.foto_fachada, 'FACHADA', payload);
+      if (tieneMedidor(d) && fotos.foto_medidor) {
+        payload.foto_medidor_b64 = await procesarFoto(fotos.foto_medidor, 'MEDIDOR', payload);
+      }
+    } catch (err) {
+      ocupado(false);
+      mensaje('❌ No se pudo procesar la foto. Tómela de nuevo.', 'error');
+      return;
+    }
+
+    ocupado(true, 'Enviando...');
+    const r = await enviar(payload);
+    ocupado(false);
+
+    if (r.ok) {
+      limpiar();
+      mensaje(`✅ Registro guardado${r.fila ? ' (fila ' + r.fila + ')' : ''}. Puede levantar el siguiente predio.`, 'success');
+      enviarPendientes(false);
+      return;
+    }
+    if (r.tipo === 'validacion') {
+      mensaje('❌ El servidor rechazó el registro: ' + r.error, 'error');
+      return;
+    }
+    // Sin conexión o error del servidor: guardar en el celular para no perder el levantamiento
+    try {
+      await encolar(payload);
+      limpiar();
+      await pintarPendientes();
+      mensaje(`📦 ${r.tipo === 'red' ? 'Sin conexión' : r.error}. El registro quedó guardado en este celular y se enviará con "Enviar ahora" o al recuperar señal.`, 'info');
+    } catch (_) {
+      mensaje('❌ No se pudo enviar ni guardar en el celular: ' + r.error + '. No cierre la página e intente de nuevo.', 'error');
+    }
+  });
+
+  window.addEventListener('beforeunload', detenerRefinamiento);
+  actualizarVisibilidad();
+  pintarPendientes().then(() => { if (navigator.onLine) enviarPendientes(false); });
+})();
+</script>
+</body>
+</html>
