@@ -363,16 +363,28 @@
 
   // =====================================================================
   // GEOLOCALIZACIÓN (solo GPS; sin ubicación aproximada por IP)
+  // Lee el GPS de forma continua hasta alcanzar la precisión objetivo (o el
+  // tiempo máximo) y promedia las mejores lecturas, ponderadas por precisión.
   // =====================================================================
-  let geo = null;          // { lon, lat, alt, acc, fuente, t }
-  let watchId = null;
+  const GPS_OBJETIVO_M = 8;        // se detiene solo al llegar a esta precisión...
+  const GPS_MIN_LECTURAS = 3;      // ...con al menos estas lecturas
+  const GPS_TIEMPO_MAX_S = 90;     // tope de búsqueda
+
+  let geo = null;          // { lon, lat, alt, acc, fuente, n }
+  let watchId = null, timerFin = null, timerTick = null, inicioGPS = 0;
+  let lecturas = [];
 
   const UA = navigator.userAgent || '';
   const esAndroid = /Android/i.test(UA);
-  const esIOS = /iPhone|iPad|iPod/i.test(UA);
+  const esIOS = /iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+  const esMovil = esAndroid || esIOS || /Mobi|Tablet/i.test(UA);
 
   function estadoGeo(clase, texto) { const b = $('geoStatus'); b.className = 'geo-badge ' + clase; b.textContent = texto; }
   function guia(html) { const g = $('gpsGuide'); g.innerHTML = html || ''; g.classList.toggle('visible', !!html); }
+  const buscando = () => watchId !== null;
+
+  const AVISO_PC = '💻 <strong>Está usando un computador.</strong> Los computadores no tienen GPS: la ubicación se calcula por la red Wi-Fi o internet y puede tener errores de cientos o miles de metros. Para el catastro use el <strong>celular</strong>, en el predio y a cielo abierto.';
+  const CONSEJOS = '📡 <strong>Para mejorar la precisión:</strong> salga a la calle frente al predio, lejos de techos, aleros y muros altos; active la ubicación en <strong>modo de alta precisión</strong> (Android: Ajustes → Ubicación → Precisión de la ubicación de Google: activada) y espere quieto 30 a 60 segundos.';
 
   function clasificar(acc) {
     if (acc <= 5) return 'Alta';
@@ -387,83 +399,102 @@
     return `${g}° ${String(m).padStart(2, '0')}′ ${s.toFixed(2).padStart(5, '0')}″ ${dir}`;
   }
 
+  // Promedio ponderado (1/precisión²) de las lecturas cercanas a la mejor
+  function calcularPosicion() {
+    if (!lecturas.length) return null;
+    const mejor = Math.min(...lecturas.map(f => f.acc));
+    const usar = lecturas.filter(f => f.acc <= Math.max(mejor * 1.5, mejor + 3));
+    let sw = 0, la = 0, lo = 0, al = 0, swa = 0;
+    usar.forEach(f => {
+      const w = 1 / (f.acc * f.acc);
+      sw += w; la += f.lat * w; lo += f.lon * w;
+      if (f.alt !== null) { al += f.alt * w; swa += w; }
+    });
+    return { lat: la / sw, lon: lo / sw, alt: swa ? al / swa : null, acc: mejor, n: usar.length,
+             fuente: usar.length > 1 ? 'GPS (promedio)' : 'GPS' };
+  }
+
   function pintarGeo() {
     const box = $('geoDetail');
-    if (!geo) { box.innerHTML = 'Párese frente al predio y capture la ubicación.'; return; }
+    const seg = buscando() ? Math.round((Date.now() - inicioGPS) / 1000) : 0;
+    if (!geo) {
+      box.innerHTML = buscando() ? `Buscando satélites… ${seg} s` : 'Párese frente al predio y capture la ubicación.';
+      return;
+    }
     const cls = geo.acc <= PRECISION_ADVERTENCIA_M ? 'ok' : (geo.acc <= PRECISION_MAXIMA_M ? 'warn' : 'error');
-    estadoGeo(cls, (cls === 'ok' ? '✅' : '⚠️') + ' GPS ±' + geo.acc.toFixed(0) + ' m — precisión ' + clasificar(geo.acc));
+    estadoGeo(buscando() ? '' : cls, buscando()
+      ? `🛰️ Afinando GPS… ±${geo.acc.toFixed(0)} m · ${lecturas.length} lecturas · ${seg} s`
+      : (cls === 'ok' ? '✅' : '⚠️') + ' GPS ±' + geo.acc.toFixed(0) + ' m — precisión ' + clasificar(geo.acc));
     box.innerHTML =
       `<strong>Longitud (X):</strong> ${geo.lon.toFixed(8)} &nbsp; <strong>Latitud (Y):</strong> ${geo.lat.toFixed(8)}<br>` +
       `<strong>Altitud (Z):</strong> ${geo.alt === null ? 'N/D' : geo.alt.toFixed(2) + ' m'} &nbsp; ` +
-      `<strong>Precisión:</strong> ${geo.acc.toFixed(1)} m &nbsp; <strong>Fuente:</strong> ${geo.fuente}<br>` +
+      `<strong>Precisión:</strong> ${geo.acc.toFixed(1)} m &nbsp; <strong>Fuente:</strong> ${geo.fuente}` +
+      (geo.n > 1 ? ` (${geo.n} lecturas)` : '') + '<br>' +
       `<strong>GMS:</strong> ${dms(geo.lat, 'lat')}, ${dms(geo.lon, 'lon')}` +
-      (geo.acc > PRECISION_MAXIMA_M ? '<br><strong style="color:#c62828">Precisión insuficiente: salga a cielo abierto y recapture.</strong>' : '');
+      (!buscando() && geo.acc > PRECISION_MAXIMA_M ? '<br><strong style="color:#c62828">Precisión insuficiente: salga a cielo abierto y recapture.</strong>' : '');
   }
 
-  function tomarPosicion(p, fuente) {
-    const c = p.coords;
-    if (!Number.isFinite(c.latitude) || !Number.isFinite(c.longitude)) return false;
-    const acc = Number.isFinite(c.accuracy) ? c.accuracy : 9999;
-    if (geo && acc >= geo.acc) return false;
-    geo = { lon: c.longitude, lat: c.latitude, alt: Number.isFinite(c.altitude) ? c.altitude : null, acc, fuente, t: Date.now() };
-    pintarGeo();
-    return true;
+  function botonGPS() {
+    const b = $('btnGPS');
+    b.disabled = false;
+    b.innerHTML = buscando() ? '⏹️ DETENER Y USAR LA MEJOR LECTURA'
+      : (geo ? '🔄 RECAPTURAR UBICACIÓN' : '🛰️ ACTIVAR GPS Y CAPTURAR UBICACIÓN');
   }
 
+  // Detiene la búsqueda y deja la mejor posición obtenida
   function detenerRefinamiento() {
     if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    clearTimeout(timerFin); clearInterval(timerTick);
+    pintarGeo(); botonGPS();
+    if (geo && geo.acc > PRECISION_ADVERTENCIA_M) guia(esMovil ? CONSEJOS : AVISO_PC);
+    else if (geo && messageDiv.className.includes('error')) messageDiv.className = 'message';
   }
 
-  function refinar() {
-    detenerRefinamiento();
-    let lecturas = 0;
+  function iniciarGPS() {
+    guia(esMovil ? '' : AVISO_PC);
+    if (!window.isSecureContext) {
+      estadoGeo('error', '⚠️ Se requiere HTTPS para el GPS');
+      guia('🔒 Abra el formulario con una dirección <strong>https://</strong>.');
+      return;
+    }
+    if (!navigator.geolocation) { estadoGeo('error', '❌ Este navegador no tiene GPS'); return; }
+    if (buscando()) detenerRefinamiento();
+    geo = null; lecturas = []; inicioGPS = Date.now();
+    estadoGeo('', '🛰️ Buscando señal GPS…');
+
     watchId = navigator.geolocation.watchPosition(p => {
-      lecturas++;
-      tomarPosicion(p, 'GPS (refinado)');
-      if (lecturas >= 8 || (geo && geo.acc <= 5)) detenerRefinamiento();
-    }, () => detenerRefinamiento(), { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
-    setTimeout(detenerRefinamiento, 20000);
-  }
-
-  function capturarGPS() {
-    return new Promise(resolve => {
-      guia('');
-      if (!window.isSecureContext) {
-        estadoGeo('error', '⚠️ Se requiere HTTPS para el GPS');
-        guia('🔒 Abra el formulario con una dirección <strong>https://</strong>.');
-        return resolve(false);
+      const c = p.coords;
+      if (!Number.isFinite(c.latitude) || !Number.isFinite(c.longitude)) return;
+      lecturas.push({ lat: c.latitude, lon: c.longitude, acc: Number.isFinite(c.accuracy) ? c.accuracy : 9999,
+                      alt: Number.isFinite(c.altitude) ? c.altitude : null });
+      geo = calcularPosicion();
+      pintarGeo();
+      if (geo.acc <= GPS_OBJETIVO_M && lecturas.length >= GPS_MIN_LECTURAS) detenerRefinamiento();
+    }, err => {
+      if (err.code === 1) {
+        detenerRefinamiento();
+        estadoGeo('error', '❌ Permiso de ubicación denegado');
+        guia(esAndroid ? '📱 <strong>Android:</strong> toque el candado 🔒 junto a la dirección → Permisos → Ubicación → <strong>Permitir</strong>. Revise también Ajustes del teléfono → Aplicaciones → (su navegador) → Permisos → Ubicación → <strong>Permitir mientras se usa</strong> y <strong>Usar ubicación precisa</strong>.'
+          : esIOS ? '📱 <strong>iPhone:</strong> Ajustes → Privacidad → Localización → (su navegador) → <strong>Mientras se usa</strong>, y active <strong>Ubicación exacta</strong>.'
+          : 'Permita la ubicación en la configuración del navegador.');
       }
-      if (!navigator.geolocation) { estadoGeo('error', '❌ Este navegador no tiene GPS'); return resolve(false); }
+      // Tiempo agotado o señal no disponible: el seguimiento continúa hasta el tope
+    }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+
+    timerTick = setInterval(pintarGeo, 1000);
+    timerFin = setTimeout(() => {
       detenerRefinamiento();
-      geo = null;
-      estadoGeo('', '📍 Buscando señal GPS...');
-      navigator.geolocation.getCurrentPosition(p => {
-        tomarPosicion(p, 'GPS');
-        refinar();
-        resolve(true);
-      }, err => {
-        if (err.code === 1) {
-          estadoGeo('error', '❌ Permiso de ubicación denegado');
-          guia(esAndroid ? '📱 <strong>Android:</strong> toque el candado 🔒 junto a la dirección → Permisos → Ubicación → <strong>Permitir</strong>, y vuelva a tocar "ACTIVAR GPS".'
-            : esIOS ? '📱 <strong>iPhone:</strong> Ajustes → Privacidad → Localización → Safari → <strong>Mientras se usa</strong>, y active "Ubicación exacta".'
-            : 'Permita la ubicación en la configuración del navegador.');
-        } else {
-          estadoGeo('error', err.code === 3 ? '⏱️ Tiempo agotado buscando GPS' : '📡 Señal GPS no disponible');
-          guia('📡 Salga a cielo abierto, lejos de techos y muros altos; espere 20 segundos y toque de nuevo "ACTIVAR GPS".');
-        }
-        pintarGeo();
-        resolve(false);
-      }, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
-    });
+      if (!geo) {
+        estadoGeo('error', '📡 No se obtuvo señal GPS');
+        guia(esMovil ? CONSEJOS : AVISO_PC);
+      }
+    }, GPS_TIEMPO_MAX_S * 1000);
+    botonGPS();
+    pintarGeo();
   }
 
-  $('btnGPS').addEventListener('click', async () => {
-    const b = $('btnGPS');
-    b.disabled = true; b.innerHTML = '<span class="spinner"></span> Capturando ubicación...';
-    const ok = await capturarGPS();
-    if (ok && messageDiv.className.includes('error')) messageDiv.className = 'message';
-    b.disabled = false; b.innerHTML = '🔄 RECAPTURAR UBICACIÓN';
-  });
+  $('btnGPS').addEventListener('click', () => { buscando() ? detenerRefinamiento() : iniciarGPS(); });
+  if (!esMovil) guia(AVISO_PC);
 
   // =====================================================================
   // FOTOS: compresión + marca de agua con datos del levantamiento
@@ -614,7 +645,7 @@
     try { $('f_encuestador').value = localStorage.getItem('rvp_encuestador') || ''; } catch (_) {}
     detenerRefinamiento(); geo = null;               // cada predio exige su propia ubicación
     estadoGeo('', '📍 GPS no activado — toque "ACTIVAR GPS"');
-    $('btnGPS').innerHTML = '🛰️ ACTIVAR GPS Y CAPTURAR UBICACIÓN';
+    botonGPS(); guia(esMovil ? '' : AVISO_PC);
     pintarGeo(); actualizarVisibilidad();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -630,6 +661,7 @@
       if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    if (buscando()) detenerRefinamiento();
     if (!geo) {
       mensaje('📍 Falta la ubicación GPS del predio. Toque "ACTIVAR GPS".', 'error');
       $('secGeo').scrollIntoView({ behavior: 'smooth', block: 'center' });
