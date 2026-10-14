@@ -64,6 +64,20 @@
 
   .pending { display: none; background: #eef6ff; border: 1px solid #bcd7f5; color: #1a3a5c; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; align-items: center; justify-content: space-between; gap: 10px; }
   .pending.visible { display: flex; }
+
+  /* Maestro de usuarios */
+  .maestro-card { display: none; grid-column: 1 / -1; border-radius: 12px; padding: 12px 14px; margin: -4px 0 16px; font-size: 13px; line-height: 1.55; }
+  .maestro-card.visible { display: block; }
+  .maestro-card.buscando { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .maestro-card.ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+  .maestro-card.nuevo { background: #fff8e1; color: #7a4f01; border: 1px solid #ffe082; }
+  .maestro-card.error { background: #ffebee; color: #b71c1c; border: 1px solid #f5c6cb; }
+  .maestro-card strong { font-weight: 700; }
+  .maestro-card .aviso { margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(0,0,0,.15); }
+  .form-group.cambiado input { border-color: #f39c12; background: #fffaf0; }
+  .antes { display: none; font-size: 12px; color: #8a5a00; margin-top: 4px; }
+  .form-group.cambiado .antes { display: block; }
+  .antes button { border: 0; background: none; color: #2a5a7c; font-weight: 700; text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0 0 0 4px; }
   .server { display: none; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.5; }
   .server.visible { display: block; }
   .server.ok { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
@@ -131,6 +145,7 @@
   <footer>
     <p>© 2026 Todos los derechos reservados.</p>
     <p>RED VITAL PAIPA S.A. E.S.P. - NIT 900259348</p>
+    <p id="versionInfo" style="margin-top:6px;color:#b0bec5"></p>
   </footer>
 </div>
 
@@ -141,7 +156,7 @@
   // =====================================================================
   // CONFIGURACIÓN
   // =====================================================================
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzO7Sj36P6yue-GSQqm3sSWq-UAM6Wch9W22C8LLav9V7e6dMjSVOWVpDdt23avSiZr/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxAZ9m9wIATLwFbS_iicqiZc-5wtjfKwSAdhQNg_DV8UxMfkYra8PhkHKqex6jN6nuJ/exec';
   const TOKEN = '';                       // opcional, igual a CONFIG.TOKEN del Apps Script
   const PRECISION_ADVERTENCIA_M = 15;     // > 15 m pide confirmación
   const PRECISION_MAXIMA_M = 30;          // > 30 m no deja registrar
@@ -149,6 +164,7 @@
   const FOTO_CALIDAD = 0.72;              // calidad JPEG (0-1)
   const ENVIO_TIMEOUT_S = 90;             // tiempo máximo por envío (redes lentas en zona rural)
   const REINTENTO_COLA_S = 120;           // reintento automático de pendientes
+  const VERSION_FORM = '2.5 (2026-10-14)';  // cambie este número cada vez que suba el archivo a GitHub
 
   // Catálogos: deben coincidir con python/esquema.py
   const CAT = {
@@ -269,6 +285,21 @@
     s.campos.map(htmlCampo).join('') + '</div></div>').join('');
 
   SECCIONES.forEach(s => s.campos.forEach(c => CAMPOS.push(c)));
+
+  // Tarjeta del Maestro debajo del ID USUARIO y aviso "En el Maestro: …" en los 5 campos
+  const CAMPOS_MAESTRO = ['id_ruta', 'nombre', 'direccion', 'barrio', 'codigo_catastral'];
+  const ETIQUETA = { id_ruta: 'ID ruta', nombre: 'Nombre', direccion: 'Dirección', barrio: 'Barrio / Vereda', codigo_catastral: 'Código catastral' };
+  (function () {
+    const g = form.querySelector('.form-group[data-k="id_usuario"]');
+    const card = document.createElement('div');
+    card.id = 'maestroCard'; card.className = 'maestro-card'; card.setAttribute('role', 'status');
+    g.insertAdjacentElement('afterend', card);
+    CAMPOS_MAESTRO.forEach(k => {
+      const d = document.createElement('div');
+      d.className = 'antes'; d.id = 'antes_' + k;
+      form.querySelector(`.form-group[data-k="${k}"]`).appendChild(d);
+    });
+  })();
   CAMPOS.push({ k: 'observaciones', t: 'text' }, { k: 'encuestador', t: 'text', req: true });
 
   // Filtros de caracteres en vivo
@@ -589,7 +620,7 @@
   // ---------------------------------------------------------------------
   const MSG_ACCESO = 'El servidor de Google no permitió el envío. En Apps Script: Implementar → Administrar implementaciones → ✏️ → Usuarios con acceso: "Cualquier persona" → Versión: Nueva versión → Implementar.';
 
-  async function llamarServidor(opciones, segundos) {
+  async function llamarServidor(opciones, segundos, parametros) {
     if (!API_URL || API_URL.indexOf('script.google.com') < 0) {
       return { ok: false, tipo: 'acceso', error: 'Falta configurar API_URL en el formulario.' };
     }
@@ -598,7 +629,8 @@
     const t = ctrl ? setTimeout(() => ctrl.abort(), segundos * 1000) : null;
     let resp, txt;
     try {
-      resp = await fetch(API_URL, Object.assign({ redirect: 'follow', cache: 'no-store', signal: ctrl && ctrl.signal }, opciones));
+      const url = parametros ? API_URL + '?' + new URLSearchParams(parametros).toString() : API_URL;
+      resp = await fetch(url, Object.assign({ redirect: 'follow', cache: 'no-store', signal: ctrl && ctrl.signal }, opciones));
       txt = await resp.text();
     } catch (err) {
       if (err && err.name === 'AbortError') return { ok: false, tipo: 'tiempo', error: 'La red está muy lenta (más de ' + segundos + ' s sin respuesta)' };
@@ -667,6 +699,128 @@
   setInterval(() => { if (navigator.onLine && !enviandoCola) enviarPendientes(false); }, REINTENTO_COLA_S * 1000);
 
   // =====================================================================
+  // MAESTRO DE USUARIOS: búsqueda por ID y control de cambios
+  // =====================================================================
+  let maestro = null;          // última respuesta { id, encontrado, datos, fecha_actualizacion, visitas }
+  let consultaN = 0;           // descarta respuestas viejas si el técnico sigue escribiendo
+  let temporizadorId = null;
+  const claveId = v => String(v || '').replace(/\s+/g, '').toUpperCase().replace(/^0+(?=.)/, '');
+  const claveTexto = v => String(v || '').replace(/\s+/g, ' ').trim().toUpperCase();
+
+  function tarjeta(clase, html) {
+    const c = $('maestroCard');
+    c.className = 'maestro-card' + (clase ? ' visible ' + clase : '');
+    c.innerHTML = html || '';
+  }
+
+  function antiguedad(fecha) {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(fecha || '');
+    if (!m) return '';
+    const dias = (Date.now() - new Date(+m[3], +m[2] - 1, +m[1]).getTime()) / 86400000;
+    if (dias < 60) return ' (reciente)';
+    if (dias < 365) return ` (hace ${Math.round(dias / 30)} meses)`;
+    const a = Math.floor(dias / 365);
+    return ` (hace ${a} año${a === 1 ? '' : 's'})`;
+  }
+
+  function avisoVisitas(v) {
+    if (!v || !v.n) return '';
+    return `<div class="aviso">⚠️ Este usuario ya tiene <strong>${v.n}</strong> levantamiento${v.n === 1 ? '' : 's'} en el catastro` +
+      (v.ultima ? `; el último el <strong>${esc(v.ultima)}</strong>` : '') + (v.encuestador ? ` por ${esc(v.encuestador)}` : '') +
+      '. Si registra de nuevo quedará como una revisita.</div>';
+  }
+
+  // Resalta los campos que difieren del Maestro y muestra el valor anterior
+  function marcarCambios() {
+    const enMaestro = maestro && maestro.encontrado;
+    const cambiados = [];
+    CAMPOS_MAESTRO.forEach(k => {
+      const g = form.querySelector(`.form-group[data-k="${k}"]`);
+      const antes = enMaestro ? (maestro.datos[k] || '') : '';
+      const cambio = enMaestro && claveTexto($('f_' + k).value) !== claveTexto(antes);
+      g.classList.toggle('cambiado', !!cambio);
+      $('antes_' + k).innerHTML = cambio
+        ? `En el Maestro: <strong>${esc(antes || '(vacío)')}</strong><button type="button" data-restaurar="${k}">↺ restaurar</button>` : '';
+      if (cambio) cambiados.push(k);
+    });
+    if (enMaestro) {
+      const resumen = $('maestroResumen');
+      if (resumen) resumen.innerHTML = cambiados.length
+        ? `✏️ Al registrar se actualizará${cambiados.length === 1 ? '' : 'n'} en el Maestro: <strong>${cambiados.map(k => ETIQUETA[k]).join(', ')}</strong>.`
+        : '✔️ Si los datos son correctos, no cambie nada. Si alguno está desactualizado, corríjalo y quedará actualizado en el Maestro.';
+    }
+    return cambiados;
+  }
+
+  form.addEventListener('click', e => {
+    const k = e.target && e.target.dataset && e.target.dataset.restaurar;
+    if (!k || !maestro || !maestro.encontrado) return;
+    $('f_' + k).value = maestro.datos[k] || '';
+    marcarCambios();
+  });
+  CAMPOS_MAESTRO.forEach(k => $('f_' + k).addEventListener('input', marcarCambios));
+
+  function llenarCampos(datos) {
+    CAMPOS_MAESTRO.forEach(k => {
+      $('f_' + k).value = datos ? (datos[k] || '') : '';
+      marcarError(k, '');
+    });
+  }
+
+  async function buscarEnMaestro(id) {
+    id = String(id || '').trim();
+    if (!id) { maestro = null; tarjeta(''); marcarCambios(); return; }
+    if (maestro && claveId(maestro.id) === claveId(id)) return;      // ya consultado
+    const n = ++consultaN;
+    tarjeta('buscando', `🔍 Buscando el ID <strong>${esc(id)}</strong> en el Maestro de Usuarios…`);
+    const r = await llamarServidor({ method: 'GET' }, 20, { accion: 'buscar', id: id, token: TOKEN });
+    if (n !== consultaN) return;                                     // llegó una consulta más nueva
+    if (!r.ok) {
+      const venia = maestro && maestro.encontrado;
+      maestro = null;
+      if (venia) llenarCampos(null);
+      marcarCambios();
+      tarjeta('error', `⚠️ No se pudo consultar el Maestro: ${esc(r.error || 'error desconocido')}<br>Puede diligenciar los datos manualmente o tocar el ID y salir del campo para reintentar.`);
+      return;
+    }
+    const veniaEncontrado = maestro && maestro.encontrado;
+    maestro = r;
+    if (r.encontrado) {
+      // Usa el ID tal como está en el Maestro (p. ej. "10003" → "0010003")
+      if (r.datos.id_usuario && claveId(inputId.value) === claveId(r.datos.id_usuario)) inputId.value = r.datos.id_usuario;
+      llenarCampos(r.datos);
+      tarjeta('ok', `📋 <strong>Usuario encontrado en el Maestro</strong>` +
+        (r.fecha_actualizacion ? ` · Última actualización: <strong>${esc(r.fecha_actualizacion)}</strong>${antiguedad(r.fecha_actualizacion)}` : ' · Sin fecha de actualización') +
+        `<div class="aviso" id="maestroResumen"></div>` + avisoVisitas(r.visitas));
+    } else {
+      if (veniaEncontrado) llenarCampos(null);                      // no dejar datos de otro usuario
+      tarjeta('nuevo', `🆕 <strong>El ID ${esc(id)} no existe en el Maestro.</strong> Diligencie los datos del usuario: al registrar, se creará en el Maestro.` + avisoVisitas(r.visitas));
+    }
+    marcarCambios();
+  }
+
+  const inputId = $('f_id_usuario');
+  inputId.addEventListener('input', () => {
+    clearTimeout(temporizadorId);
+    const v = inputId.value.trim();
+    if (maestro && claveId(maestro.id) !== claveId(v)) tarjeta('buscando', '✍️ Termine de escribir el ID…');
+    if (v.length >= 4) temporizadorId = setTimeout(() => buscarEnMaestro(v), 900);
+  });
+  inputId.addEventListener('change', () => { clearTimeout(temporizadorId); buscarEnMaestro(inputId.value); });
+  inputId.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); clearTimeout(temporizadorId); buscarEnMaestro(inputId.value); }
+  });
+
+  function textoMaestro(m) {
+    if (!m) return '';
+    if (m.accion === 'creado') return ' · 🆕 Usuario creado en el Maestro.';
+    if (m.accion === 'actualizado') return ' · ✏️ Maestro actualizado: ' + m.campos.map(k => ETIQUETA[k] || k).join(', ') + '.';
+    if (m.accion === 'sin_cambios') return ' · Maestro sin cambios.';
+    if (m.accion === 'error') return ' · ⚠️ No se pudo actualizar el Maestro: ' + m.error;
+    return '';
+  }
+
+  // =====================================================================
   // SUBMIT
   // =====================================================================
   function mensaje(texto, tipo) {
@@ -703,6 +857,7 @@
       form.querySelector(`[data-foto="${k}"]`).textContent = '📷 Tomar foto';
     });
     form.querySelectorAll('.form-group.invalid').forEach(g => g.classList.remove('invalid'));
+    maestro = null; consultaN++; clearTimeout(temporizadorId); tarjeta(''); marcarCambios();
     try { $('f_encuestador').value = localStorage.getItem('rvp_encuestador') || ''; } catch (_) {}
     detenerRefinamiento(); geo = null;               // cada predio exige su propia ubicación
     estadoGeo('', '📍 GPS no activado — toque "ACTIVAR GPS"');
@@ -750,6 +905,7 @@
       token: TOKEN
     });
     delete payload.foto_fachada; delete payload.foto_medidor;   // el servidor pone el enlace de Drive
+    ['id_ruta', 'nombre', 'direccion', 'barrio'].forEach(k => { payload[k] = claveTexto(payload[k]); });  // mismo formato del Maestro
 
     try {
       ocupado(true, 'Procesando fotos...');
@@ -769,7 +925,7 @@
 
     if (r.ok) {
       limpiar();
-      mensaje(`✅ Registro guardado${r.fila ? ' (fila ' + r.fila + ')' : ''}. Puede levantar el siguiente predio.`, 'success');
+      mensaje(`✅ Registro guardado${r.fila ? ' (fila ' + r.fila + ')' : ''}${textoMaestro(r.maestro)} Puede levantar el siguiente predio.`, r.maestro && r.maestro.accion === 'error' ? 'info' : 'success');
       enviarPendientes(false);
       return;
     }
@@ -789,6 +945,9 @@
     }
   });
 
+  // Muestra la versión del formulario y el final de la URL del servidor: así se
+  // comprueba de un vistazo si el celular tiene el archivo nuevo o una copia vieja.
+  $('versionInfo').textContent = 'Formulario v' + VERSION_FORM + ' · Servidor …' + API_URL.replace(/\/exec$/, '').slice(-6);
   window.addEventListener('beforeunload', detenerRefinamiento);
   actualizarVisibilidad();
   pintarPendientes().then(() => verificarServidor()).then(ok => { if (ok) enviarPendientes(false); });
